@@ -1,0 +1,45 @@
+# Git auto completion and prompt
+source ~/tools/git/git-completion.bash
+source ~/tools/git/git-prompt.sh
+
+# Show dirty state in git prompt
+export GIT_PS1_SHOWDIRTYSTATE=1
+export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+
+# complete commit to current branch script
+# usage ex. : __gitci "git message"
+function __gitci() {
+    msg=${1};
+    branch=${2};
+
+    if [ -z "${branch}" ]; then
+        branch=HEAD;
+    fi
+
+    if [ -z "${msg}" ]; then
+        echo "No commit message set! Set a commit message first"
+    else
+        git add .;
+        git add -a;
+        git commit -am "${msg}";
+        git push origin HEAD;
+    fi
+}
+
+
+# complete tag script
+# usgae ex.: __gittag 1.2.0_RC1
+function __gittag() {
+    tag=${1};
+
+    if [ -z "${tag}" ]; then
+        echo "No tag name set! Set tag name first"
+    else
+        git tag "${tag}";
+        git push origin "${tag}";
+    fi
+}
+
+alias gitst='git status'
+alias gitci='__gitci'       # usage ex. : gitci "git message"
+alias gittag='__gittag'     # usgae ex.: gittag 1.2.0_RC1

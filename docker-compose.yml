@@ -1,0 +1,153 @@
+version: '2'
+
+### Applications Code Container #################################
+services:
+
+    ### Empty shell Containers ##################################
+    application:
+        container_name: base
+        image: tianon/true
+        volumes:
+            - ./_data/sites:/var/www/sites:rw
+
+    ### Workspace Container #####################################
+    workspace:
+        container_name: workspace
+        build:
+            context: ./workspace
+            args:
+                - PUID=${PUID}
+                - PGID=${PGID}
+                - LOCAL_USER=${LOCAL_USER}
+                - GIT_NAME=${GIT_NAME}
+                - GIT_EMAIL=${GIT_EMAIL}
+                - BIN_PATH=/usr/local/bin/
+        volumes_from:
+            - application
+        volumes:
+            - ./workspace/etc/php:/etc/php:rw
+            - ./workspace/home/local_user:/home/${LOCAL_USER}:rw
+        tty: true
+
+    ### Nginx Server Container ##################################
+    nginx:
+        container_name: nginx
+        build:
+            context: ./nginx
+            args:
+                - DEBUG=${DEV_ENVIRONMENT}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory (if it not yet exists, Docker will attempt to create it - deprecated behaviour!) and the container won't build
+            - ./_data/logs/nginx:/var/log/nginx:rw
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+            - ./nginx/certs/:/etc/ssl/certs/custom/:ro
+            - ./nginx/sites-available/:/etc/nginx/sites-available/:ro
+            - ./nginx/snippets/:/etc/nginx/snippets/:ro
+        networks:
+            - vlan0
+
+    ### PHP-FPM Containers ######################################
+    php56-fpm:
+        container_name: php56-fpm
+        build:
+            context: ./php/5.6
+            args:
+                - DEBUG=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_data/logs/php/php56-fpm.log:/var/log/php-fpm.log:rw
+            - ./_data/logs/php/php56-opcache.log:/var/log/php-opcache.log:rw
+            - ./php/5.6/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php/5.6/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+            # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
+            - ./php/5.6/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+            - ./php/5.6/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+        networks:
+            - vlan0
+
+    php70-fpm:
+        container_name: php70-fpm
+        build:
+            context: ./php/7.0
+            args:
+                - DEBUG=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_data/logs/php/php70-fpm.log:/var/log/php-fpm.log:rw
+            - ./_data/logs/php/php70-opcache.log:/var/log/php-opcache.log:rw
+            - ./php/7.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php/7.0/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+            # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
+            - ./php/7.0/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+            - ./php/7.0/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+        networks:
+            - vlan0
+
+    php71-fpm:
+        container_name: php71-fpm
+        build:
+            context: ./php/7.1
+            args:
+                - DEBUG=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_data/logs/php/php71-fpm.log:/var/log/php-fpm.log:rw
+            - ./_data/logs/php/php71-opcache.log:/var/log/php-opcache.log:rw
+            - ./php/7.1/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php/7.1/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+            # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
+            - ./php/7.1/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+            - ./php/7.1/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+        networks:
+            - vlan0
+
+    ### MariaDB Container #######################################
+    mariadb:
+        container_name: mariadb
+        build:
+            context: ./mariadb
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+        environment:
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./_data/logs/mariadb/mysql.log:/var/log/mysql.log:rw
+            - ./_data/logs/mariadb/mysql.err:/var/log/mysql.err:rw
+            - ./_data/logs/mariadb/mysql:/var/log/mysql:rw
+            - ./_data/mysql:/var/lib/mysql:rw   # mysql data directory
+            - ./mariadb/etc/mysql:/etc/mysql:ro # config directory
+        networks:
+            - vlan0
+
+### Networks Setup ##############################################
+networks:
+    vlan0:
+        driver: bridge
+
+### Volumes Setup ###############################################
+volumes:
+    mariadb:
+        driver: "local"

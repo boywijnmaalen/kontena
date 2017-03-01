@@ -1,0 +1,95 @@
+# FROM can appear multiple times within a single Dockerfile in order to create multiple images.
+FROM php:$MAJOR_VERSION.$MINOR_VERSION-fpm
+
+ARG DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+ARG PHP_FPM_VERSION=$MAJOR_VERSION$MINOR_VERSION
+ARG PHP_FPM_INSTALL_XDEBUG=false
+ARG PHP_FPM_INSTALL_MEMCACHED=false
+ARG PHP_FPM_LOG=/var/log/php-fpm.log
+ARG PHP_OPCACHE_LOG=/var/log/php-opcache.log
+
+
+# install required dependencies for PHP modules
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
+        apt-utils \
+        curl \
+        libcurl3-dev \
+        libfreetype6-dev \
+        libicu-dev \
+        libjpeg-dev \
+        libmcrypt-dev \
+        libmemcached-dev \
+        libpng12-dev \
+        libpq-dev \
+        libssl-dev \
+        libxml2-dev \
+        libz-dev
+
+# if DEV_ENVIRONMENT = true, install dev tools
+RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
+
+    apt-get install -y --no-install-recommends \
+        apt-utils \
+        bash \
+        mlocate \
+        net-tools \
+        vim \
+;fi
+
+# install PHP modules
+# possible values for ext-name:
+# bcmath bz2 calendar ctype curl dba dom enchant exif fileinfo filter ftp gd gettext gmp hash iconv imap interbase intl json ldap mbstring mcrypt mysqli oci8 odbc opcache pcntl pdo pdo_dblib pdo_firebird pdo_mysql pdo_oci pdo_odbc pdo_pgsql pdo_sqlite pgsql phar posix pspell readline recode reflection session shmop simplexml snmp soap sockets spl standard sysvmsg sysvsem sysvshm tidy tokenizer wddx xml xmlreader xmlrpc xmlwriter xsl zip
+RUN docker-php-ext-install -j$(nproc) bcmath curl iconv intl mbstring mcrypt mysqli opcache pdo pdo_mysql simplexml xml \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd
+
+# xDebug:
+RUN if [ ${PHP_FPM_INSTALL_XDEBUG} = true ]; then \
+
+    pecl install xdebug \
+    && docker-php-ext-enable xdebug \
+;fi
+
+# Memcached:
+RUN if [ ${PHP_FPM_INSTALL_MEMCACHED} = true ]; then \
+
+    # < PHP 7.0
+    if [ ${PHP_FPM_VERSION} -lt 70 ]; then \
+
+        apt-get install -y --no-install-recommends \
+            git \
+        && git clone https://github.com/php-memcached-dev/php-memcached.git /usr/src/php/ext/memcached \
+        && cd /usr/src/php/ext/memcached \
+        && git checkout REL2_0 \
+        && docker-php-ext-configure memcached \
+        && docker-php-ext-install memcached \
+
+    # >= PHP 7.0
+    ;else \
+
+        pecl install memcached \
+        && docker-php-ext-enable memcached \
+
+    ;fi \
+;fi
+
+# create and set permissions for log files
+RUN touch ${PHP_OPCACHE_LOG} \
+    && touch ${PHP_FPM_LOG} \
+    && chown www-data: ${PHP_OPCACHE_LOG} \
+    && chown www-data: ${PHP_FPM_LOG} \
+
+    # clean up
+    && apt-get clean \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc /usr/share/locale /var/log/apt/* /var/log/*.log \
+    && dpkg -la | awk '{print $2}' | grep '\-dev' | xargs apt-get remove -y \
+    && rm /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && rm -rvf /usr/src/php
+
+# set work directory
+WORKDIR /var/www/sites
+
+CMD ["php-fpm"]

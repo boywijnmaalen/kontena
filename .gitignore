@@ -1,0 +1,33 @@
+# platform
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+
+# project files
+_data/
+.env
+nginx/sites-available/*
+php/*.*/Dockerfile
+workspace/etc/php/*.*/cli/php.ini
+workspace/etc/php/*.*/cli/conf.d/*
+workspace/home/local_user/.ssh/*
+workspace/home/local_user/.cache/
+workspace/home/local_user/.composer/
+workspace/home/local_user/.config/
+workspace/home/local_user/.npm/
+workspace/home/local_user/.bash_history
+workspace/home/local_user/.gitconfig
+workspace/home/local_user/.npmrc
+workspace/home/local_user/.sudo_as_admin_successful
+workspace/home/local_user/.v8flags*
+workspace/home/local_user/.viminfo
+
+HOWTO.md
+TODO.md
