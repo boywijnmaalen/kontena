@@ -13,6 +13,7 @@ Thumbs.db
 # project files
 _data/
 .env
+docs/
 nginx/sites-available/*
 php/*.*/Dockerfile
 workspace/etc/php/*.*/cli/php.ini
