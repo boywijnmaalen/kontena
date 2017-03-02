@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# get current directory
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../ && pwd )"
+
+# make sure we always start in project root
+cd ${ROOT_DIR}
+
+# load config
+source ${ROOT_DIR}/.env
+
 gitconfig="[user]
     name = \"${GIT_NAME}\"
     email = \"${GIT_EMAIL}\"
@@ -13,15 +22,6 @@ gitconfig="[user]
     ignorecase = ${GIT_IGNORE_CASE}
 [color]
     ui = true"
-
-# get current directory
-ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../ && pwd )"
-
-# make sure we always start in project root
-cd ${ROOT_DIR}
-
-# load config
-source ${ROOT_DIR}/.env
 
 # create .gitconfig in the local_user directory
 if [ ! -e "${ROOT_DIR}/workspace/home/local_user/.gitconfig" ]; then \
