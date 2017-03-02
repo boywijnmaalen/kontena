@@ -18,6 +18,7 @@ Main features
 =============
 
 * Linux, Mac OS X and Windows support
+* The project is designed for flexibility and being in control, this means that all config & logging is available on the host - outside their respective containers - for easy tailing and editing
 
 Installation
 ============
@@ -33,27 +34,29 @@ Docker
 Project
 -------
 
-* Run ``git clone git@github.com:boywijnmaalen/kontena.git`` or download the latest `here <https://github.com/boywijnmaalen/kontena/archive/master.zip>`_.
+* Run ``$ git clone git@github.com:boywijnmaalen/kontena.git`` or download the latest `here <https://github.com/boywijnmaalen/kontena/archive/master.zip>`_.
 
-* Run ``cd kontena``
-* Run ``cp .env.example .env``
+* Run ``$ cd kontena``
+* Run ``$ cp .env.example .env``
 * Update the config options in ``.env`` with your own values
 
-If you want to run a first time installation;
+**If you want to run a first time installation;**
 
-* Run ``./_scripts/setup.sh && docker-compose up -d --build``
+* Run ``$ ./_scripts/setup.sh && docker-compose up -d --build``
 
-If you want to do a re-installation from scratch;
+  (You can run ``./_scripts/setup.sh`` as often as you like)
 
-* Run ``docker-compose down --remove-orphans && ./_scripts/reset.sh && docker-compose up -d --build``
+**If you want to do a re-installation from scratch;**
 
-Now be *patient* :)
+* Run ``$ docker-compose down --remove-orphans && ./_scripts/reset.sh && docker-compose up -d --build``
+
+Now go grab a coffee and be *patient* :)
 
 Optional
 --------
 
-* add `vhosts`_ - Add more vhosts for your web server
-* add `SSH Keys`_ - Add SSH Keys for Github use or because you're to lazy to enter your password when logging into different servers :-)
+* Add `vhosts`_ - Add more vhosts for your web server
+* Add `SSH Keys`_ - Add SSH Keys for Github use or because you're to lazy to enter your password when logging into different servers :-)
 
 Components
 ==========
@@ -91,7 +94,7 @@ Features
   * `PHP Mess Detector <https://phpmd.org//>`_
   * `PHP Copy/Paste Detector (CPD) <https://github.com/sebastianbergmann/phpcpd/>`_
   * `PHP CodeSniffer <https://github.com/squizlabs/PHP_CodeSniffer/>`_
-  * `PHPUnit <https://phpunit.de/>`_ `5.7 <https://github.com/sebastianbergmann/phpunit/tree/5.7/>`_ (for PHP 5.6) & `6.0 <https://github.com/sebastianbergmann/phpunit/tree/6.0/>`_ (for >= PHP 7.0)
+  * `PHPUnit <https://phpunit.de/>`_ `5.7 <https://github.com/sebastianbergmann/phpunit/tree/5.7/>`_ (PHP 5.6) & `6.0 <https://github.com/sebastianbergmann/phpunit/tree/6.0/>`_ (>= PHP 7.0)
   * `Splitsh-lite <https://github.com/splitsh/lite/>`_
   * `Bower <https://bower.io//>`_
   * `Gulp <http://gulpjs.com//>`_
@@ -133,19 +136,21 @@ Vhosts
 ~~~~~~
 
 When starting a new development project you're probably going to need a new vhost.
+
+
 Let's go with the following example;
 
     You want to create a new website located at http://dashboard.dev.local.
     All the project files will live in directory ``_data/sites/dashboard/``
     (The included SSL Certificate is valid for \*.dev.local domains, hence the example).
 
-* First create the new web root directory ``_data/sites/dashboard`` by running: ``mkdir _data/sites/dashboard``
-* Create a new vhost configuration file by copying the vhost template to the correct directory by running: ``cp nginx/vhost.conf nginx/sites-available/dashboard.conf``
+* First create the new web root directory ``_data/sites/dashboard`` by running: ``$ mkdir _data/sites/dashboard``
+* Create a new vhost configuration file by copying the vhost template to the correct directory by running: ``$ cp nginx/vhost.conf nginx/sites-available/dashboard.conf``
 * Update the '*root*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new web root path '``_data/sites/dashboard``'
 * Update the '*server_name*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new hostname '``dashboard.dev.local``' (no 'http' or https' required here)
 * Optionally update any of the other directives if you want to.
 
-The new vhost is now ready for use. For now, your host machine is not aware of the new hostname so we'll need to add it;
+The new vhost is now ready for use. For now, your host machine is not aware of the new hostname so we'll need to add it to its hosts file;
 
 * If you are on Mac/Linux, add '``127.0.0.1	dashboard.dev.local``' to file ``/etc/hosts``, if you are on Windows add it to file ``c:\System32\drivers\etc\hosts``
 * The last thing we need to do is tell Nginx there is a new vhost configuration. Nginx only gathers vhost information upon startup. The easiest way to do that is to restart the Nginx container by running ``docker-compose restart nginx``.
