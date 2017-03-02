@@ -8,7 +8,7 @@ services:
         container_name: base
         image: tianon/true
         volumes:
-            - ./_data/sites:/var/www/sites:rw
+            - ${WEB_ROOT}:/var/www/sites:rw
 
     ### Workspace Container #####################################
     workspace:
