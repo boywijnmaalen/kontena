@@ -92,4 +92,3 @@ RUN touch ${PHP_OPCACHE_LOG} \
 # set work directory
 WORKDIR /var/www/sites
 
-CMD ["php-fpm"]

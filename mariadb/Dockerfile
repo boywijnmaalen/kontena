@@ -16,5 +16,3 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
 ;fi
 
 EXPOSE 3306
-
-CMD ["mysqld"]

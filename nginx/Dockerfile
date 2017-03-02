@@ -1,7 +1,6 @@
 # nginx setup one vhost per website with multiple PHP versions
 # - http://serverfault.com/questions/598202/make-nginx-to-pass-hostname-of-the-upstream-when-reverseproxying
 # - http://stackoverflow.com/questions/37025966/nginx-setting-up-variable-upstream-per-virtual-host
-
 FROM nginx:latest
 
 ARG DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
@@ -39,5 +38,3 @@ EXPOSE 80 443
 
 # set work directory
 WORKDIR /var/www/sites
-
-CMD ["nginx"]

@@ -28,6 +28,10 @@ if [ ! -e "${ROOT_DIR}/workspace/home/local_user/.gitconfig" ]; then \
     echo "${gitconfig}" > "${ROOT_DIR}/workspace/home/local_user/.gitconfig" \
 ;fi
 
+# set permissions for log files
+find ${ROOT_DIR}/_data/logs/* -type d -exec chmod 744 {} +
+find ${ROOT_DIR}/_data/logs/* -type f -exec chmod 640 {} +
+
 # loop through PHP versions
 for php_version in 5.6 7.0 7.1; do
 

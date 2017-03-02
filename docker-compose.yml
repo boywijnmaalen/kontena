@@ -35,7 +35,10 @@ services:
         build:
             context: ./nginx
             args:
-                - DEBUG=${DEV_ENVIRONMENT}
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+        ports:
+            - "80:80"
+            - "443:443"
         volumes_from:
             - application
         volumes:
@@ -47,6 +50,8 @@ services:
             - ./nginx/certs/:/etc/ssl/certs/custom/:ro
             - ./nginx/sites-available/:/etc/nginx/sites-available/:ro
             - ./nginx/snippets/:/etc/nginx/snippets/:ro
+            - ./nginx/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             - vlan0
 
@@ -56,7 +61,7 @@ services:
         build:
             context: ./php/5.6
             args:
-                - DEBUG=${DEV_ENVIRONMENT}
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
                 - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
         volumes_from:
@@ -71,6 +76,8 @@ services:
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
             - ./php/5.6/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
             - ./php/5.6/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+            - ./php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             - vlan0
 
@@ -79,7 +86,7 @@ services:
         build:
             context: ./php/7.0
             args:
-                - DEBUG=${DEV_ENVIRONMENT}
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
                 - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
         volumes_from:
@@ -94,6 +101,8 @@ services:
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
             - ./php/7.0/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
             - ./php/7.0/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+            - ./php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             - vlan0
 
@@ -102,7 +111,7 @@ services:
         build:
             context: ./php/7.1
             args:
-                - DEBUG=${DEV_ENVIRONMENT}
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
                 - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
         volumes_from:
@@ -117,6 +126,8 @@ services:
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
             - ./php/7.1/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
             - ./php/7.1/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+            - ./php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             - vlan0
 
@@ -139,6 +150,8 @@ services:
             - ./_data/logs/mariadb/mysql:/var/log/mysql:rw
             - ./_data/mysql:/var/lib/mysql:rw   # mysql data directory
             - ./mariadb/etc/mysql:/etc/mysql:ro # config directory
+            - ./mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             - vlan0
 

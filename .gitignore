@@ -11,8 +11,8 @@ Thumbs.db
 .idea/
 
 # project files
-_data/
 .env
+_data/*
 docs/
 nginx/sites-available/*
 php/*.*/Dockerfile
