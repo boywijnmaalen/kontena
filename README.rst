@@ -65,6 +65,7 @@ Once it is installed you can start using it by running;
 Notes:
  - *The script ./_scripts/start.sh will start the Docker application in the event it wasn't running already*
  - *You can run ./_scripts/setup.sh as often as you like*
+ - *using the 'nfs' parameter requires the use of some sudo commands, your password therefor is required*
 
 Optional
 --------
