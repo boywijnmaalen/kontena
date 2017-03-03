@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 
 ### Applications Code Container #################################
 services:
@@ -28,7 +28,9 @@ services:
             - ${MOUNT}/workspace/etc/php:/etc/php:rw
             - ${MOUNT}/workspace/home/local_user:/home/${LOCAL_USER}:rw
         networks:
-            - vlan0
+            vlan0:
+                ipv4_address: 172.16.0.2
+                ipv6_address: 2001:3984:3989::2
         tty: true
 
     ### Nginx Server Container ##################################
@@ -55,7 +57,9 @@ services:
             - ${MOUNT}/nginx/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
-            - vlan0
+            vlan0:
+                ipv4_address: 172.16.0.3
+                ipv6_address: 2001:3984:3989::3
 
     ### PHP-FPM Containers ######################################
     php56-fpm:
@@ -81,7 +85,9 @@ services:
             - ${MOUNT}/php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
-            - vlan0
+            vlan0:
+                ipv4_address: 172.16.0.4
+                ipv6_address: 2001:3984:3989::4
 
     php70-fpm:
         container_name: php70-fpm
@@ -106,7 +112,9 @@ services:
             - ${MOUNT}/php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
-            - vlan0
+            vlan0:
+                ipv4_address: 172.16.0.5
+                ipv6_address: 2001:3984:3989::5
 
     php71-fpm:
         container_name: php71-fpm
@@ -131,7 +139,9 @@ services:
             - ${MOUNT}/php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
-            - vlan0
+            vlan0:
+                ipv4_address: 172.16.0.6
+                ipv6_address: 2001:3984:3989::6
 
     ### MariaDB Container #######################################
     mariadb:
@@ -156,15 +166,21 @@ services:
         entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
-                ipv4_address: 172.19.0.255
+                ipv4_address: 172.16.0.7
+                ipv6_address: 2001:3984:3989::7
 
 ### Networks Setup ##############################################
 networks:
     vlan0:
         driver: bridge
+        enable_ipv6: true
         ipam:
-            config:
-                - subnet: 172.19.0.0/24
+          driver: default
+          config:
+          - subnet: 172.16.0.0/24
+            gateway: 172.16.0.1
+          - subnet: 2001:3984:3989::/64
+            gateway: 2001:3984:3989::1
 
 ### Volumes Setup ###############################################
 volumes:
