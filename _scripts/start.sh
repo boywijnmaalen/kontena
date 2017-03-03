@@ -90,10 +90,11 @@ done
 if [ ${mode} = "nfs" ]; then
 
     ~/d4m-nfs/d4m-nfs.sh
-    ${ROOT_DIR}/docker-compose -f docker-compose-with-nfs.yml up -d --build ${services[@]}
+    cd ${ROOT_DIR}
+    docker-compose -f docker-compose-with-nfs.yml up -d --build ${services[@]}
 else
-
-    ${ROOT_DIR}/docker-compose up -d --build ${services[@]}
+    cd ${ROOT_DIR}
+    docker-compose up -d --build ${services[@]}
 fi
 
 echo ""
