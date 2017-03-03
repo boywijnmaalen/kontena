@@ -27,6 +27,8 @@ services:
         volumes:
             - ./workspace/etc/php:/etc/php:rw
             - ./workspace/home/local_user:/home/${LOCAL_USER}:rw
+        networks:
+            - vlan0
         tty: true
 
     ### Nginx Server Container ##################################
