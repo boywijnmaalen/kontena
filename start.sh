@@ -16,17 +16,16 @@ in_array() {
     return 1
 }
 
+mode=${1}
 services=()
 modes=("nfs" "default");
 
-if ! in_array modes $1; then
+if ! in_array modes ${mode}; then
 
-    echo "[$(basename $BASH_SOURCE)] Docker mode is undefined"
-    exit 1
+    mode=default
+else
+    shift
 fi
-
-mode=$1
-shift
 
 while getopts ":s:m:h" option; do
 
@@ -63,15 +62,19 @@ else
 
     if ! $(docker info > /dev/null 2>&1); then
 
-        echo "[$(basename $BASH_SOURCE)] Starting Docker as it was not running"
+        echo "[$(basename $BASH_SOURCE)] Starting D4M as it was not running"
         open -a /Applications/Docker.app
     fi
 
-    echo -ne "\n[$(basename $BASH_SOURCE)]  Wait until D4M is running."
+    echo -ne "[$(basename $BASH_SOURCE)]  Wait until D4M is running"
     while ! $(docker run --rm hello-world > /dev/null 2>&1); do
         echo -n "."
         sleep .25
     done
 
+    echo ""
+
     docker-compose up -d --build ${services[@]}
 fi
+
+docker ps -a
