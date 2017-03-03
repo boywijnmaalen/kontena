@@ -155,8 +155,8 @@ services:
             - /mnt/current-mac-user/Development/mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
-            - vlan0:
-                ipv4_address: 172.19.0.2
+            vlan0:
+                ipv4_address: 172.19.0.255
 
 ### Networks Setup ##############################################
 networks:
