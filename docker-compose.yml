@@ -156,11 +156,15 @@ services:
         entrypoint: /usr/bin/entrypoint.sh
         networks:
             - vlan0
+                ipv4_address: 172.19.0.2
 
 ### Networks Setup ##############################################
 networks:
     vlan0:
         driver: bridge
+        ipam:
+            config:
+                - subnet: 172.19.0.0/24
 
 ### Volumes Setup ###############################################
 volumes:
