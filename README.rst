@@ -42,15 +42,29 @@ Project
 
 **If you want to run a first time installation;**
 
-* Run ``$ ./_scripts/setup.sh && docker-compose up -d --build``
+Obviously you can run your containers via Docker for Mac's (D4M) default implementation of osxfs. Performance however can be abismal.
+You can do so by running;
 
-  (You can run ``./_scripts/setup.sh`` as often as you like)
+* Run ``$ ./_scripts/setup.sh && ./_scripts/start.sh``
+
+But you can also make use of `d4m-nfs's <https://github.com/IFSight/d4m-nfs>`_ NFS mounts! (rather than the default osxfs implementation)
+Read all about it in ``./readme-d4m-performance-improvement``.
+
+Once it is installed you can start using it by running;
+
+* Run ``$ ./_scripts/setup.sh && ./_scripts/start.sh nfs`` (mind the '**nfs**' parameter)
 
 **If you want to do a re-installation from scratch;**
 
-* Run ``$ docker-compose down --remove-orphans && ./_scripts/reset.sh && docker-compose up -d --build``
+* Run ``$ docker-compose down --remove-orphans && ./_scripts/reset.sh && ./_scripts/start.sh``
 
-Now go grab a coffee and be *patient* :)
+  (you can optionally supply the '**nfs**' parameter here as well)
+
+**Now go grab a coffee and be patient :)**
+
+Notes:
+ - *The script ./_scripts/start.sh will start the Docker application in the event it wasn't running already*
+ - *You can run ./_scripts/setup.sh as often as you like*
 
 Optional
 --------
@@ -140,7 +154,7 @@ When starting a new development project you're probably going to need a new vhos
 
 Let's go with the following example;
 
-    You want to create a new website located at http://dashboard.dev.local.
+    You want to create a new website located at https://dashboard.dev.local.
     All the project files will live in directory ``_data/sites/dashboard/``
     (The included SSL Certificate is valid for \*.dev.local domains, hence the example).
 
@@ -150,7 +164,7 @@ Let's go with the following example;
 * Update the '*server_name*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new hostname '``dashboard.dev.local``' (no 'http' or https' required here)
 * Optionally update any of the other directives if you want to.
 
-The new vhost is now ready for use. For now, your host machine is not aware of the new hostname so we'll need to add it to its hosts file;
+The new vhost is now ready for use! But for now, your host machine is not aware of the new hostname so we'll need to add it to its hosts file;
 
 * If you are on Mac/Linux, add '``127.0.0.1	dashboard.dev.local``' to file ``/etc/hosts``, if you are on Windows add it to file ``c:\System32\drivers\etc\hosts``
 * The last thing we need to do is tell Nginx there is a new vhost configuration. Nginx only gathers vhost information upon startup. The easiest way to do that is to restart the Nginx container by running ``docker-compose restart nginx``.
@@ -170,12 +184,17 @@ MariaDB
 
 MariaDB
 
-MariaDB is a community-developed fork of the `MySQL <https://en.wikipedia.org/wiki/MySQL>`_ `relational database management system <https://en.wikipedia.org/wiki/Relational_database_management_system>`_
+MariaDB is a community-developed fork of the `MySQL <https://en.wikipedia.org/wiki/MySQL>`_ (`relational database management system <https://en.wikipedia.org/wiki/Relational_database_management_system>`_)
 
 Features
 ~~~~~~~~
 
 Features
+
+Connect to MariaDB
+~~~~~~~~~~~~~~~~~~
+
+Connect to Mariadb by using IP ``172.16.0.7``
 
 Docker
 ======

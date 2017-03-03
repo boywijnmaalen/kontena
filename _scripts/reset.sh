@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# get current directory
+# get project root directory
 ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../ && pwd )"
 
 # start with clean $HOME dir
