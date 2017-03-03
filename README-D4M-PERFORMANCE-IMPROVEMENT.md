@@ -25,7 +25,7 @@ $ git clone git@github.com:IFSight/d4m-nfs.git ~/d4m-nfs
 Create file etc/d4m-nfs-mounts.txt and the following;
 
 ```bash
-$ echo "/Users/$USER:/mnt/current-mac-user
+$ echo "/Users/$USER:/mnt/mac_user
 /Volumes:/Volumes
 /private:/private
 /opt:/opt" > ~/d4m-nfs/etc/d4m-nfs-mounts.txt
@@ -69,7 +69,7 @@ $ cp ./docker-compose.yml ./docker-compose-with-nfs.yml
 
 Rewrite all volume paths
 
-- replace /**Users/\<your-mac-username\>**/www -> /**mnt/current-mac-user**/www
+- replace /**Users/\<your-mac-username\>**/www -> /**mnt/mac_user**/www
 
 
 ### #8.
@@ -88,9 +88,9 @@ If your containers were already build we need to rebuild them by adding the --bu
 $ docker-compose -f docker-compose-with-nfs.yml up -d --build
 ```
 
-## Reboot?
+## Rebooted Mac/restarted Docker?
 
-If you reboot your mac perform steps **#3**, **#4** and **#8** again.
+Execute steps **#3**, **#4** and **#8** once more.
 
 ## Facts
 
