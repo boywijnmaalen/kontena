@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 [-s <string>] [-m <nfs|default>]" 1>&2;
+    echo "[$(basename $BASH_SOURCE)] Usage: $0 [-s <string>] [-m <nfs|default>]" 1>&2;
     exit 1;
 }
 
@@ -21,7 +21,7 @@ modes=("nfs" "default");
 
 if ! in_array modes $1; then
 
-    echo "Docker mode is undefined"
+    echo "[$(basename $BASH_SOURCE)] Docker mode is undefined"
     exit 1
 fi
 
@@ -42,12 +42,12 @@ while getopts ":s:m:h" option; do
                 exit 0
             ;;
             \?)
-                echo "An invalid option given: -$OPTARG"
+                echo "[$(basename $BASH_SOURCE)] An invalid option given: -$OPTARG"
                 usage
                 exit 1
             ;;
             :)
-                echo "The value option -$OPTARG was omitted."
+                echo "[$(basename $BASH_SOURCE)] The value option -$OPTARG was omitted."
                 usage
                 exit 1
             ;;
@@ -63,9 +63,15 @@ else
 
     if ! $(docker info > /dev/null 2>&1); then
 
-        echo "Starting Docker as it was not running"
+        echo "[$(basename $BASH_SOURCE)] Starting Docker as it was not running"
         open -a /Applications/Docker.app
     fi
+
+    echo -ne "\n[$(basename $BASH_SOURCE)]  Wait until D4M is running."
+    while ! $(docker run --rm hello-world > /dev/null 2>&1); do
+        echo -n "."
+        sleep .25
+    done
 
     docker-compose up -d --build ${services[@]}
 fi
