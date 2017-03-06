@@ -21,8 +21,7 @@ function __gitci() {
     else
         git add .;
         git add -A;
-        git commit -am "${msg}";
-        git push origin HEAD;
+        git commit -m "${msg}";
     fi
 }
 
