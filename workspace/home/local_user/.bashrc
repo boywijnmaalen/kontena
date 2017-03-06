@@ -125,6 +125,9 @@ PS1="\[\033[1;30m\][\033[0;32m\]\t - \033[0;31m\]\u\033[1;37m\]\[\033[1;37m\]@\[
 # load npm auto completion
 . ~/.bash_git_completion
 
+# Set default editor
+EDITOR=vim;
+
 # load the ssh-agent when the user logs in.
 # if an ssh-agent is forwarded than that one will be used.
 # all keys are imported and if needed the user will be prompted for a password.
@@ -140,9 +143,6 @@ if [ "$?" == 2 ]; then
         ssh-add
     fi
 fi
-
-# Set default editor
-EDITOR=vim
 
 # Redirect to var/www/sites since it is the webroot.
 cd /var/www/sites
