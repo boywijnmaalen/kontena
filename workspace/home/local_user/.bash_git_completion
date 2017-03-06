@@ -20,7 +20,7 @@ function __gitci() {
         echo "No commit message set! Set a commit message first"
     else
         git add .;
-        git add -a;
+        git add -A;
         git commit -am "${msg}";
         git push origin HEAD;
     fi
