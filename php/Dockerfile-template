@@ -8,6 +8,10 @@ ARG PHP_FPM_INSTALL_MEMCACHED=false
 ARG PHP_FPM_LOG=/var/log/php-fpm.log
 ARG PHP_OPCACHE_LOG=/var/log/php-opcache.log
 
+# prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
+# change the way debconf (Debian Package Configuration System) configures packages
+# 'noninteractive' is needed for the build steps as all packages must work in noninteractive mode as well
+ENV DEBIAN_FRONTEND noninteractive
 
 # install required dependencies for PHP modules
 RUN apt-get update \
@@ -44,6 +48,33 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
 RUN docker-php-ext-install -j$(nproc) bcmath curl iconv intl mbstring mcrypt mysqli opcache pdo pdo_mysql simplexml xml \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd
+
+# sqlsrv & pdo_sqlsrv
+# https://pecl.php.net/package/sqlsrv
+# https://pecl.php.net/package/pdo_sqlsrv
+
+# add Microsoft repo for Microsoft ODBC Driver 13 for Linux
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-transport-https \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update
+
+# Install dependencies
+RUN ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
+    unixodbc \
+    unixodbc-dev \
+    libgss3 \
+    odbcinst \
+    msodbcsql \
+    locales \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
+
+RUN pecl install sqlsrv-4.1.6.1 \
+    && pecl install pdo_sqlsrv-4.1.6.1 \
+    && docker-php-ext-enable \
+        sqlsrv \
+        pdo_sqlsrv
 
 # xDebug:
 RUN if [ ${PHP_FPM_INSTALL_XDEBUG} = true ]; then \
@@ -88,6 +119,11 @@ RUN touch ${PHP_OPCACHE_LOG} \
     && dpkg -la | awk '{print $2}' | grep '\-dev' | xargs apt-get remove -y \
     && rm /usr/local/etc/php-fpm.d/zz-docker.conf \
     && rm -rvf /usr/src/php
+
+# fallback to the 'teletype' for  debconf
+# this way both interactive and non-interactive modes get set
+# 'teletype' is needed for interactive configuration steps the user might want to do inside a running container
+ENV DEBIAN_FRONTEND teletype
 
 # set work directory
 WORKDIR /var/www/sites
