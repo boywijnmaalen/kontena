@@ -84,6 +84,10 @@ Components
 Workspace
 ---------
 
+The workspace is a separate container where you can login and use the tools you would on any regular development server setup, it makes sure you don't have to install any tools locally.
+Just login into the container via ; ``$ docker-compose exec --user=admin workspace bash`` (make sure you're in the root directory of the Kontena project) and you're all set!
+It comes pre-installed with PHP (so you can run it from the CLI), Git, Composer, NodeJS, Yarn, various PHP tools and Bower, Gulp and SASS if you're
+
 Features
 ~~~~~~~~
 
