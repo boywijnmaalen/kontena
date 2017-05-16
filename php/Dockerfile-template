@@ -3,6 +3,7 @@ FROM php:$MAJOR_VERSION.$MINOR_VERSION-fpm
 
 ARG DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
 ARG PHP_FPM_VERSION=$MAJOR_VERSION$MINOR_VERSION
+ARG PHP_FPM_INSTALL_FREETDS=false
 ARG PHP_FPM_INSTALL_XDEBUG=false
 ARG PHP_FPM_INSTALL_MEMCACHED=false
 ARG PHP_FPM_LOG=/var/log/php-fpm.log
@@ -52,29 +53,32 @@ RUN docker-php-ext-install -j$(nproc) bcmath curl iconv intl mbstring mcrypt mys
 # sqlsrv & pdo_sqlsrv
 # https://pecl.php.net/package/sqlsrv
 # https://pecl.php.net/package/pdo_sqlsrv
+RUN if [ ${PHP_FPM_INSTALL_FREETDS} = true ]; then \
 
-# add Microsoft repo for Microsoft ODBC Driver 13 for Linux
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    apt-transport-https \
-    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-    && apt-get update
+    # add Microsoft repo for Microsoft ODBC Driver 13 for Linux
+    RUN apt-get install -y --no-install-recommends \
+            apt-transport-https \
+        && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+        && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+        && apt-get update \
 
-# Install dependencies
-RUN ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
-    unixodbc \
-    unixodbc-dev \
-    libgss3 \
-    odbcinst \
-    msodbcsql \
-    locales \
-    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
+    # install dependencies
+    RUN ACCEPT_EULA=Y apt-get install -y --no-install-recommends \
+            unixodbc \
+            unixodbc-dev \
+            libgss3 \
+            odbcinst \
+            msodbcsql \
+            locales \
+        && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen \
 
-RUN pecl install sqlsrv-4.1.6.1 \
-    && pecl install pdo_sqlsrv-4.1.6.1 \
-    && docker-php-ext-enable \
-        sqlsrv \
-        pdo_sqlsrv
+    # install sqlsrv & pdo_sqlsrv
+    RUN pecl install sqlsrv-4.1.6.1 \
+        && pecl install pdo_sqlsrv-4.1.6.1 \
+        && docker-php-ext-enable \
+            sqlsrv \
+            pdo_sqlsrv \
+;fi
 
 # xDebug:
 RUN if [ ${PHP_FPM_INSTALL_XDEBUG} = true ]; then \

@@ -68,6 +68,7 @@ services:
             context: ./php/5.6
             args:
                 - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_FREETDS=${PHP_FPM_INSTALL_FREETDS}
                 - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
         volumes_from:
@@ -95,6 +96,7 @@ services:
             context: ./php/7.0
             args:
                 - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_FREETDS=${PHP_FPM_INSTALL_FREETDS}
                 - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
         volumes_from:
@@ -122,6 +124,7 @@ services:
             context: ./php/7.1
             args:
                 - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_FREETDS=${PHP_FPM_INSTALL_FREETDS}
                 - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
         volumes_from:
