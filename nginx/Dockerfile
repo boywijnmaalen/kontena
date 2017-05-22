@@ -16,6 +16,7 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         mlocate \
         net-tools \
         vim \
+        wget \
         sudo \
 ;fi
 

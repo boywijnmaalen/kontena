@@ -32,6 +32,7 @@ RUN apt-get update \
         curl \
         git \
         sudo \
+        wget \
         nodejs \
         yarn
 
