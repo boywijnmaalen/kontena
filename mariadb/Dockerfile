@@ -13,6 +13,7 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         mlocate \
         net-tools \
         vim \
+        sudo \
 ;fi
 
 EXPOSE 3306
