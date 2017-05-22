@@ -73,12 +73,9 @@ RUN if [ ${PHP_FPM_INSTALL_PDO_SQLSRV} = true ]; then \
             locales \
         && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen \
 
-    # install sqlsrv & pdo_sqlsrv
-        && pecl install sqlsrv \
-        && pecl install pdo_sqlsrv \
-        && docker-php-ext-enable \
-            sqlsrv \
-            pdo_sqlsrv \
+        # install sqlsrv & pdo_sqlsrv
+        && pecl install pdo_sqlsrv-4.1.6.1 sqlsrv-4.1.6.1 \
+        && docker-php-ext-enable pdo_sqlsrv sqlsrv \
 ;fi
 
 # xDebug:
