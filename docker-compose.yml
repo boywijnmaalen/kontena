@@ -1,4 +1,4 @@
-version: '2.1'
+version: '3.8'
 
 ### Applications Code Container #################################
 services:
@@ -8,34 +8,86 @@ services:
         container_name: base
         image: tianon/true
         volumes:
-            - ./${WEB_ROOT}:/var/www/sites:rw
+            - ${WEB_ROOT}:/var/www/sites:rw
 
     ### Workspace Container #####################################
     workspace:
         container_name: workspace
+        hostname: workspace.dev.local
         build:
             context: ./workspace
             args:
-                - PUID=${PUID}
-                - PGID=${PGID}
-                - LOCAL_USER=${LOCAL_USER}
+                - WORKSPACE_LOCAL_USER=${WORKSPACE_LOCAL_USER}
+                - WORKSPACE_LOCAL_USER_PUID=${WORKSPACE_LOCAL_USER_PUID}
+                - WORKSPACE_LOCAL_USER_PGUID=${WORKSPACE_LOCAL_USER_PGUID}
                 - GIT_NAME=${GIT_NAME}
                 - GIT_EMAIL=${GIT_EMAIL}
+                - PHP_VERSIONS=${PHP_VERSIONS}
                 - BIN_PATH=/usr/local/bin/
         volumes_from:
             - application
         volumes:
-            - ./workspace/etc/php:/etc/php:rw
-            - ./workspace/home/local_user:/home/${LOCAL_USER}:rw
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./workspace/php/php56-cli.ini:/etc/php/5.6/cli/php-cli.ini:rw
+            - ./workspace/php/php70-cli.ini:/etc/php/7.0/cli/php-cli.ini:rw
+            - ./workspace/php/php71-cli.ini:/etc/php/7.1/cli/php-cli.ini:rw
+            - ./workspace/php/php72-cli.ini:/etc/php/7.2/cli/php-cli.ini:rw
+            - ./workspace/php/php73-cli.ini:/etc/php/7.3/cli/php-cli.ini:rw
+            - ./workspace/php/php74-cli.ini:/etc/php/7.4/cli/php-cli.ini:rw
+            - ./workspace/php/php80-cli.ini:/etc/php/8.0/cli/php-cli.ini:rw
+            - ./workspace/home/local_user:/home/${WORKSPACE_LOCAL_USER}:rw
+            - ./workspace/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
-                ipv4_address: 172.16.0.2
-                ipv6_address: 2001:3984:3989::2
-        tty: true
+                ipv4_address: 172.16.0.3
+                ipv6_address: 2001:3984:3989::3
+
+    ### DNS Server Container ####################################
+    dns:
+        container_name: dns
+        hostname: dns.dev.local
+        build:
+            context: ./dns
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+        ports:
+            - "127.0.0.1:53:53/udp"
+            - "127.0.0.1:53:53/tcp"
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./dns/etc/bind/zones/db.dev.local:/etc/bind/zones/db.dev.local:rw
+            - ./dns/etc/bind/zones/db.reverse.dev.local:/etc/bind/zones/db.reverse.dev.local:rw
+            - ./dns/etc/bind/named.conf:/etc/bind/named.conf:rw
+            - ./dns/etc/bind/named.conf.local:/etc/bind/named.conf.local:rw
+            - ./dns/etc/bind/named.conf.custom.local:/etc/bind/named.conf.custom.local:rw
+            - ./dns/etc/bind/named.conf.options:/etc/bind/named.conf.options:rw
+            - ./_logs/dns/default.log:/var/log/named/default.log:rw
+            - ./_logs/dns/error.log:/var/log/named/error.log:rw
+            - ./_logs/dns/query.log:/var/log/named/query.log:rw
+            - ./dns/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.4
+                ipv6_address: 2001:3984:3989::4
 
     ### Nginx Server Container ##################################
     nginx:
         container_name: nginx
+        hostname: nginx.dev.local
+        links:
+            #- gitlab
+            - php56-fpm
+            - php70-fpm
+            - php71-fpm
+            - php72-fpm
+            - php73-fpm
+            - php74-fpm
+            - php80-fpm
+            - workspace
         build:
             context: ./nginx
             args:
@@ -48,107 +100,23 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory (if it not yet exists, Docker will attempt to create it - deprecated behaviour!) and the container won't build
-            - ./_data/logs/nginx:/var/log/nginx:rw
+            - ./_logs/nginx:/var/log/nginx:rw
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
             - ./nginx/certs/:/etc/ssl/certs/custom/:ro
             - ./nginx/sites-available/:/etc/nginx/sites-available/:ro
             - ./nginx/snippets/:/etc/nginx/snippets/:ro
-            - ./nginx/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
-        entrypoint: /usr/bin/entrypoint.sh
-        networks:
-            vlan0:
-                ipv4_address: 172.16.0.3
-                ipv6_address: 2001:3984:3989::3
-
-    ### PHP-FPM Containers ######################################
-    php56-fpm:
-        container_name: php56-fpm
-        build:
-            context: ./php/5.6
-            args:
-                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
-                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
-                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
-                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
-        volumes_from:
-            - application
-        volumes:
-            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
-            # Docker will otherwise assume a directory and the container won't build
-            - ./_data/logs/php/php56-fpm.log:/var/log/php-fpm.log:rw
-            - ./_data/logs/php/php56-opcache.log:/var/log/php-opcache.log:rw
-            - ./php/5.6/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
-            - ./php/5.6/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
-            # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
-            - ./php/5.6/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
-            - ./php/5.6/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
-            - ./php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
-        entrypoint: /usr/bin/entrypoint.sh
-        networks:
-            vlan0:
-                ipv4_address: 172.16.0.4
-                ipv6_address: 2001:3984:3989::4
-
-    php70-fpm:
-        container_name: php70-fpm
-        build:
-            context: ./php/7.0
-            args:
-                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
-                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
-                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
-                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
-        volumes_from:
-            - application
-        volumes:
-            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
-            # Docker will otherwise assume a directory and the container won't build
-            - ./_data/logs/php/php70-fpm.log:/var/log/php-fpm.log:rw
-            - ./_data/logs/php/php70-opcache.log:/var/log/php-opcache.log:rw
-            - ./php/7.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
-            - ./php/7.0/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
-            # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
-            - ./php/7.0/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
-            - ./php/7.0/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
-            - ./php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+            - ./nginx/entrypoint.sh:/usr/bin/entrypoint.sh:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
                 ipv4_address: 172.16.0.5
                 ipv6_address: 2001:3984:3989::5
 
-    php71-fpm:
-        container_name: php71-fpm
-        build:
-            context: ./php/7.1
-            args:
-                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
-                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
-                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
-                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
-        volumes_from:
-            - application
-        volumes:
-            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
-            # Docker will otherwise assume a directory and the container won't build
-            - ./_data/logs/php/php71-fpm.log:/var/log/php-fpm.log:rw
-            - ./_data/logs/php/php71-opcache.log:/var/log/php-opcache.log:rw
-            - ./php/7.1/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
-            - ./php/7.1/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
-            # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
-            - ./php/7.1/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
-            - ./php/7.1/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
-            - ./php/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
-        entrypoint: /usr/bin/entrypoint.sh
-        networks:
-            vlan0:
-                ipv4_address: 172.16.0.6
-                ipv6_address: 2001:3984:3989::6
-
     ### MariaDB Container #######################################
     mariadb:
         container_name: mariadb
+        hostname: mariadb.dev.local
         build:
             context: ./mariadb
             args:
@@ -160,17 +128,336 @@ services:
         ports:
             - "3306:3306"
         volumes:
-            - ./_data/logs/mariadb/mysql.log:/var/log/mysql.log:rw
-            - ./_data/logs/mariadb/mysql.err:/var/log/mysql.err:rw
-            - ./_data/logs/mariadb/mysql:/var/log/mysql:rw
-            - ./_data/mysql:/var/lib/mysql:rw   # mysql data directory
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/mariadb/mysql.log:/var/log/mysql.log:rw
+            - ./_logs/mariadb/mysql.err:/var/log/mysql.err:rw
+            - ./_logs/mariadb/mysql:/var/log/mysql:rw
+            - ./_data/mariadb:/var/lib/mysql:rw # mysql data directory
             - ./mariadb/etc/mysql:/etc/mysql:ro # config directory
             - ./mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
+                ipv4_address: 172.16.0.6
+                ipv6_address: 2001:3984:3989::6
+
+    ### CockroachDB Container ###################################
+    cockroachdb:
+        container_name: cockroachdb
+        hostname: cockroachdb.dev.local
+        build:
+            context: ./cockroachdb
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - COCKROACH_PORT=${COCKROACH_PORT}
+                - COCKROACH_HTTP_PORT=${COCKROACH_HTTP_PORT}
+                - COCKROACH_DATA_DIR=${COCKROACH_DATA_DIR}
+                - COCKROACH_LOG_DIR=${COCKROACH_LOG_DIR}
+                - COCKROACH_LOCAL_USER_PUID=${COCKROACH_LOCAL_USER_PUID}
+                - COCKROACH_LOCAL_USER_PGUID=${COCKROACH_LOCAL_USER_PGUID}
+                - COCKROACH_LOCAL_USER=${COCKROACH_LOCAL_USER}
+        ports:
+            - "26257:26257"
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/cockroachdb:/var/log/cockroachdb:rw # log directory
+            - ./_data/cockroachdb:/var/data/cockroachdb:rw # data directory
+            - ./cockroachdb/certs:/certs:ro # cert directory
+            - ./cockroachdb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
                 ipv4_address: 172.16.0.7
                 ipv6_address: 2001:3984:3989::7
+
+    ### Redis Container #########################################
+    redis:
+        container_name: redis
+        hostname: redis.dev.local
+        build:
+            context: ./redis
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - REDIS_PORT=${REDIS_PORT}
+        ports:
+            - "6379:6379"
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/redis:/var/log/redis:rw # log directory
+            - ./_data/redis:/data:rw # data directory
+            - ./redis/redis.conf:/var/lib/redis.conf:ro # config file
+            - ./redis/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.8
+                ipv6_address: 2001:3984:3989::8
+
+#    ### RabbitMQ Container ######################################
+#    rabbitmq:
+#        container_name: rabbitmq
+#        hostname: rabbitmq.dev.local
+#        build:
+#            context: ./rabbitmq
+#            args:
+#                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+#                - REDIS_PORT=${REDIS_PORT}
+#        ports:
+#            - "5672:5672"
+#        volumes:
+#            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+#            # Docker will otherwise assume a directory and the container won't build
+#            - ./_logs/rabbitmq:/var/log/rabbitmq:rw # log directory
+#            - ./_data/rabbitmq:/data:rw # data directory
+#            - ./rabbitmq/rabbitmq.conf:/var/lib/rabbitmq.conf:ro # config file
+#            - ./rabbitmq/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+#        entrypoint: /usr/bin/entrypoint.sh
+#        networks:
+#            vlan0:
+#                ipv4_address: 172.16.0.9
+#                ipv6_address: 2001:3984:3989::9
+
+    ### Gitlab Container ########################################
+    #    gitlab:
+    #        container_name: gitlab
+    #        hostname: gitlab.dev.local
+    #        links:
+    #            - mariadb
+    #        build:
+    #            context: ./gitlab
+    #            args:
+    #                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+    #                - GITLAB_ADMIN_EMAIL=${GITLAB_ADMIN_EMAIL}
+    #                - GITLAB_ADMIN_PASSWORD=${GITLAB_ADMIN_PASSWORD}
+    #                - GITLAB_LOCAL_USER=${GITLAB_LOCAL_USER}
+    #                - GITLAB_LOCAL_USER_PUID=${GITLAB_LOCAL_USER_PUID}
+    #                - GITLAB_MYSQL_USER=${GITLAB_MYSQL_USER}
+    #                - GITLAB_MYSQL_PASSWORD=${GITLAB_MYSQL_PASSWORD}
+    #                - GITLAB_MYSQL_DATABASE=${GITLAB_MYSQL_DATABASE}
+    #                - GITLAB_RAILS_ENV=${GITLAB_RAILS_ENV}
+    #        volumes:
+    #            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+    #            # Docker will otherwise assume a directory and the container won't build
+    #            - ./_data/gitlab/repositories/:/home/${GITLAB_LOCAL_USER}/repositories/:rw
+    #            - ./_logs/gitlab/:/home/${GITLAB_LOCAL_USER}/gitlab-ce/log/:rw
+    #            - ./gitlab/gitlab.conf:/etc/default/gitlab:rw
+    #            - ./gitlab/home/local_user/gitaly/config.toml:/home/${GITLAB_LOCAL_USER}/gitaly/config.toml:rw
+    #            - ./gitlab/home/local_user/gitlab/config/unicorn.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/unicorn.rb:rw
+    #            - ./gitlab/home/local_user/gitlab/config/gitlab.yml:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/gitlab.yml:rw
+    #            - ./gitlab/home/local_user/gitlab/config/mail_room.yml:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/mail_room.yml:rw
+    #            - ./gitlab/home/local_user/gitlab/config/resque.yml:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/resque.yml:rw
+    #            - ./gitlab/home/local_user/gitlab/config/environments/development.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/environments/development.rb:rw
+    #            - ./gitlab/home/local_user/gitlab/config/environments/production.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/environments/production.rb:rw
+    #            - ./gitlab/home/local_user/gitlab/config/environments/test.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/environments/test.rb:rw
+    #            - ./gitlab/home/local_user/gitlab-shell/config.yml:/home/${GITLAB_LOCAL_USER}/gitlab-shell/config.yml:rw
+    #            - ./gitlab/home/local_user/.ssh/authorized_keys:/home/${GITLAB_LOCAL_USER}/.ssh/authorized_keys:rw
+    #            - ./gitlab/redis/redis.conf:/etc/gitlab/redis/redis.conf/:rw
+    #            - ./gitlab/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+    #        entrypoint: /usr/bin/entrypoint.sh
+    #        networks:
+    #            vlan0:
+    #                ipv4_address: 172.16.0.8
+    #                ipv6_address: 2001:3984:3989::8
+
+    ### PHP-FPM Containers ######################################
+    php56-fpm:
+        container_name: php56-fpm
+        hostname: php56-fpm.dev.local
+        build:
+            context: ./php-fpm/5.6
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php56-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php56-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php56-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/5.6/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/5.6/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/5.6/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.20
+                ipv6_address: 2001:3984:3989::20
+
+    php70-fpm:
+        container_name: php70-fpm
+        hostname: php70-fpm.dev.local
+        build:
+            context: ./php-fpm/7.0
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php70-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php70-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php70-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/7.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/7.0/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/7.0/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.21
+                ipv6_address: 2001:3984:3989::21
+
+    php71-fpm:
+        container_name: php71-fpm
+        hostname: php71-fpm.dev.local
+        build:
+            context: ./php-fpm/7.1
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php71-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php71-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php71-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/7.1/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/7.1/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/7.1/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.22
+                ipv6_address: 2001:3984:3989::22
+
+    php72-fpm:
+        container_name: php72-fpm
+        hostname: php72-fpm.dev.local
+        build:
+            context: ./php-fpm/7.2
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php72-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php72-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php72-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/7.2/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/7.2/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/7.2/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.23
+                ipv6_address: 2001:3984:3989::23
+
+    php73-fpm:
+        container_name: php73-fpm
+        hostname: php73-fpm.dev.local
+        build:
+            context: ./php-fpm/7.3
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php73-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php73-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php73-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/7.3/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/7.3/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/7.3/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.24
+                ipv6_address: 2001:3984:3989::24
+
+    php74-fpm:
+        container_name: php74-fpm
+        hostname: php74-fpm.dev.local
+        build:
+            context: ./php-fpm/7.4
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php74-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php74-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php74-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/7.4/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/7.4/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/7.4/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.25
+                ipv6_address: 2001:3984:3989::25
+
+    php80-fpm:
+        container_name: php80-fpm
+        hostname: php80-fpm.dev.local
+        build:
+            context: ./php-fpm/8.0
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - PHP_FPM_INSTALL_PDO_SQLSRV=${PHP_FPM_INSTALL_PDO_SQLSRV}
+                - PHP_FPM_INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
+                - PHP_FPM_INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED}
+        volumes_from:
+            - application
+        volumes:
+            # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
+            # Docker will otherwise assume a directory and the container won't build
+            - ./_logs/php-fpm/php80-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php80-xdebug.log:/var/log/php-xdebug.log:rw
+            - ./_logs/php-fpm/php80-opcache.log:/var/log/php-opcache.log:rw
+            - ./php-fpm/8.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./php-fpm/8.0/php.ini:/usr/local/etc/php/php.ini:ro
+            - ./php-fpm/8.0/php-cli.ini:/usr/local/etc/php/php-cli.ini:ro
+            - ./php-fpm/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.26
+                ipv6_address: 2001:3984:3989::26
 
 ### Networks Setup ##############################################
 networks:
@@ -178,15 +465,9 @@ networks:
         driver: bridge
         enable_ipv6: true
         ipam:
-          driver: default
-          config:
-          - subnet: 172.16.0.0/24
-            gateway: 172.16.0.1
-          - subnet: 2001:3984:3989::/64
-            gateway: 2001:3984:3989::1
-
-
-### Volumes Setup ###############################################
-volumes:
-    mariadb:
-        driver: "local"
+            driver: default
+            config:
+                - subnet: 172.16.0.0/24
+                  gateway: 172.16.0.1
+                - subnet: 2001:3984:3989::/64
+                  gateway: 2001:3984:3989::1

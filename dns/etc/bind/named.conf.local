@@ -1,0 +1,9 @@
+zone "dev.local" {
+    type master;
+    file "/etc/bind/zones/db.dev.local";
+};
+
+zone "0.0.127.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/db.reverse.dev.local";
+};

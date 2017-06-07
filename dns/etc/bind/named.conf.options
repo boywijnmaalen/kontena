@@ -1,0 +1,79 @@
+logging {
+    channel "default" {
+        file "/var/log/named/default.log";
+        severity dynamic;
+        print-time YES;
+        print-severity YES;
+        print-category YES;
+    };
+
+    channel "error" {
+        file "/var/log/named/error.log";
+        severity dynamic;
+        print-time YES;
+        print-severity YES;
+        print-category YES;
+    };
+
+    channel "query" {
+        file "/var/log/named/query.log";
+        severity dynamic;
+        print-time YES;
+        print-severity NO;
+        print-category NO;
+    };
+
+    category default { default; };
+    category general { default; };
+    category database { default; };
+    category security { default; };
+    category config { default; };
+    category resolver { default; };
+    category notify { default; };
+    category client { default; };
+    category unmatched { default; };
+    category queries { query; };
+    category query-errors { error; };
+    category network { default; };
+    category update { default; };
+    category dispatch { default; };
+    category dnssec { default; };
+    category lame-servers { default; };
+};
+
+options {
+    directory "/var/cache/bind";
+
+    auth-nxdomain no; # conform RFC1035
+
+    listen-on port 53 {
+        any;
+    };
+
+    listen-on-v6 {
+        ::1;
+    };
+
+    allow-recursion {
+        any;
+    };
+
+    allow-transfer {
+        any;
+    };
+
+    allow-query {
+        any;
+    };
+
+    allow-update {
+        any;
+    };
+
+    querylog yes;
+
+    recursion yes;
+
+    dnssec-enable yes;
+    dnssec-validation yes;
+};

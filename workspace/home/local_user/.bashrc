@@ -1,6 +1,8 @@
-# ~/.bashrc: executed by bash(1) for non-login shells.
-# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
-# for examples
+# reads
+# https://sunlightmedia.org/bash-vs-zsh/
+# https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
+# https://geoff.greer.fm/lscolors/
+# bash shortcuts - https://natelandau.com/my-mac-osx-bash_profile/
 
 # If not running interactively, don't do anything
 case $- in
@@ -8,16 +10,21 @@ case $- in
       *) return;;
 esac
 
+# Build a list with all servers to use for autocomplete with SSH and SCP
+# make sure the ssh config property 'HashKnownHosts' is set to 'no'
+HOSTLIST=$(echo `cat ~/.ssh/known_hosts | cut -f 1 -d ' ' | sed -e s/,.*//g | sed -e 's/^\[\(.*\)\].*/\1/g' | egrep -v '^[0-9]' | uniq`;)
+complete -o bashdefault -o default -W "${HOSTLIST}" ssh
+complete -o bashdefault -o default -o nospace -W "${HOSTLIST}" scp
+
+# Add `~/.bin` to the `$PATH`
+export PATH="$HOME/.bin:/usr/local/sbin:/usr/local/bin:$PATH";
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
 
 # append to the history file, don't overwrite it
 shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -27,23 +34,14 @@ shopt -s checkwinsize
 # match all files and zero or more directories and subdirectories.
 shopt -s globstar
 
-# make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
     xterm-color|*-256color) color_prompt=yes;;
 esac
-
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
-force_color_prompt=yes
 
 if [ -n "$force_color_prompt" ]; then
     if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
@@ -84,49 +82,23 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
-# colored GCC warnings and errors
-export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+# project alias definitions.
+source ~/.bash_aliases
 
-# some more ls aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
+# load NPM auto completion
+source ~/.bash_npm_completion
 
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+# https://github.com/git/git/tree/master/contrib/completion
+# load GIT auto completion and prompt
+source /usr/share/bash-completion/completions/git
+source /etc/bash_completion.d/git-prompt
 
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/.bash_completion
-  fi
-fi
+# Show dirty state in git prompt
+export GIT_PS1_SHOWDIRTYSTATE=1
+export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
 
 # set colored prompt
-PS1="\[\033[1;30m\][\033[0;32m\]\t - \033[0;31m\]\u\033[1;37m\]\[\033[1;37m\]@\[\033[1;33m\]\h\[\033[1;30m\]]  \[\033[0;37m\]\W \[\033[1;30m\]\[\033[0m\]\[$MAGENTA\]\$(__git_ps1) \[$WHITE\]\$  "
-
-# load GIT auto completion
-. ~/.bash_npm_completion
-
-# load npm auto completion
-. ~/.bash_git_completion
-
-# Set default editor
-EDITOR=vim;
+PS1="\[\033[1;30m\][\033[0;32m\]\t - \033[0;31m\]\u\033[1;37m\]\[\033[1;37m\]@\[\033[1;33m\]\h\[\033[1;30m\]] \[\033[0;37m\]\W\[\033[1;30m\]\[\033[0m\]\[$MAGENTA\]\$(__git_ps1)\[$WHITE\] \$ "
 
 # load the ssh-agent when the user logs in.
 # if an ssh-agent is forwarded than that one will be used.
@@ -144,5 +116,27 @@ if [ "$?" == 2 ]; then
     fi
 fi
 
+# Set default editor
+EDITOR=vim;
+
+# colored GCC warnings and errors
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# colored listing of diretory content
+export CLICOLOR=YES
+export LSCOLORS="exfxfxfxcxfxxhAhAhAhAh"
+
+# GO PATH vars
+export GOROOT=/usr/local/go
+# (~/go is the default since Go 1.8)
+export GOPATH=/home/admin/go
+# (GOBIN defaults to the bin directory under $GOPATH - so urgent need to set it manually, but we'll set it regardless)
+export GOBIN=/home/admin/go/bin
+
 # Redirect to var/www/sites since it is the webroot.
 cd /var/www/sites
+
+# want custom bashrc stuff? use ~/.bash_custom_aliases
+if [ -f ~/.bash_custom_aliases ]; then
+    source ~/.bash_custom_aliases
+fi

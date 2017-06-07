@@ -45,26 +45,26 @@ Project
 Obviously you can run your containers via Docker for Mac's (D4M) default implementation of osxfs. Performance however can be abismal.
 You can do so by running;
 
-* Run ``$ ./_scripts/setup.sh && ./_scripts/start.sh``
+* Run ``$ ./_bin/setup.sh && ./_bin/start.sh``
 
 But you can also make use of `d4m-nfs's <https://github.com/IFSight/d4m-nfs>`_ NFS mounts! (rather than the default osxfs implementation)
 Read all about it in ``./readme-d4m-performance-improvement``.
 
 Once it is installed you can start using it by running;
 
-* Run ``$ ./_scripts/setup.sh && ./_scripts/start.sh nfs`` (mind the '**nfs**' parameter)
+* Run ``$ ./_bin/setup.sh && ./_bin/start.sh nfs`` (mind the '**nfs**' parameter)
 
 **If you want to do a re-installation from scratch;**
 
-* Run ``$ docker-compose down --remove-orphans && ./_scripts/reset.sh && ./_scripts/start.sh``
+* Run ``$ docker-compose down --remove-orphans && ./_bin/reset.sh && ./_bin/start.sh``
 
   (you can optionally supply the '**nfs**' parameter here as well)
 
 **Now go grab a coffee and be patient :)**
 
 Notes:
- - *The script ./_scripts/start.sh will start the Docker application in the event it wasn't running already*
- - *You can run ./_scripts/setup.sh as often as you like*
+ - *The script ./_bin/start.sh will start the Docker application in the event it wasn't running already*
+ - *You can run ./_bin/setup.sh as often as you like*
  - *using the 'nfs' parameter requires the use of some sudo commands, your password therefor is required*
 
 Optional
@@ -80,6 +80,7 @@ Components
 * `Nginx`_
 * `PHP-FPM`_
 * `MariaDB`_
+* `Gitlab CE`_
 
 Workspace
 ---------
@@ -160,12 +161,12 @@ When starting a new development project you're probably going to need a new vhos
 Let's go with the following example;
 
     You want to create a new website located at https://dashboard.dev.local.
-    All the project files will live in directory ``_data/sites/dashboard/``
+    All the project files will live in directory ``_src/sites/dashboard/``
     (The included SSL Certificate is valid for \*.dev.local domains, hence the example).
 
-* First create the new web root directory ``_data/sites/dashboard`` by running: ``$ mkdir _data/sites/dashboard``
+* First create the new web root directory ``_src/sites/dashboard`` by running: ``$ mkdir _src/sites/dashboard``
 * Create a new vhost configuration file by copying the vhost template to the correct directory by running: ``$ cp nginx/vhost.conf nginx/sites-available/dashboard.conf``
-* Update the '*root*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new web root path '``_data/sites/dashboard``'
+* Update the '*root*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new web root path '``_src/sites/dashboard``'
 * Update the '*server_name*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new hostname '``dashboard.dev.local``' (no 'http' or https' required here)
 * Optionally update any of the other directives if you want to.
 
@@ -200,6 +201,12 @@ Connect to MariaDB
 ~~~~~~~~~~~~~~~~~~
 
 Connect to Mariadb by using IP ``172.16.0.7``
+
+Gitlab CE
+---------
+
+`GitLab <https://about.gitlab.com>`_ is a web-based Git repository manager with wiki and issue tracking features, using an open source license.
+
 
 Docker
 ======
