@@ -1,0 +1,12 @@
+---
+user: git
+gitlab_url: https://gitlab.dev.local
+http_settings:
+    self_signed_cert: true
+auth_file: "/home/git/.ssh/authorized_keys"
+redis:
+    bin: "/usr/bin/redis-cli"
+    namespace: resque:gitlab
+    socket: "/var/run/redis/redis.sock"
+log_level: INFO
+audit_usernames: false

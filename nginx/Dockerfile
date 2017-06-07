@@ -5,6 +5,11 @@ FROM nginx:latest
 
 ARG DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
 
+# prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
+# change the way debconf (Debian Package Configuration System) configures packages
+# 'noninteractive' is needed for the build steps as all packages must work in noninteractive mode as well
+ENV DEBIAN_FRONTEND noninteractive
+
 # if DEV_ENVIRONMENT = true, install dev tools
 RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
 
@@ -18,6 +23,10 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         vim \
         wget \
         sudo \
+        tcpdump \
+        telnet \
+        inetutils-ping \
+    && update-alternatives --set editor /usr/bin/vim.basic \
 ;fi
 
 # create www-data user
@@ -36,6 +45,7 @@ RUN apt-get clean \
     && dpkg -la | awk '{print $2}' | grep '\-dev' | xargs apt-get remove -y \
     && rm /etc/nginx/conf.d/default.conf
 
+# expose http, https
 EXPOSE 80 443
 
 # set work directory

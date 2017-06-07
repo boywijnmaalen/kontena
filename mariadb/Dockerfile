@@ -15,6 +15,10 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         vim \
         wget \
         sudo \
+        tcpdump \
+        telnet \
+        inetutils-ping \
+    && update-alternatives --set editor /usr/bin/vim.basic \
 ;fi
 
 EXPOSE 3306

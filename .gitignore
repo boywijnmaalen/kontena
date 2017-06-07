@@ -14,8 +14,19 @@ Thumbs.db
 .env
 _data/*
 docs/
+
+gitlab/entrypoint.sh
+gitlab/home/local_user/.ssh/authorized_keys
+
+mariadb/entrypoint.sh
+
+nginx/entrypoint.sh
 nginx/sites-available/*
+
+php/entrypoint.sh
 php/*.*/Dockerfile
+
+workspace/entrypoint.sh
 workspace/etc/php/*.*/cli/php.ini
 workspace/etc/php/*.*/cli/conf.d/*
 workspace/home/local_user/.ssh/*
@@ -29,6 +40,8 @@ workspace/home/local_user/.npmrc
 workspace/home/local_user/.sudo_as_admin_successful
 workspace/home/local_user/.v8flags*
 workspace/home/local_user/.viminfo
+workspace/home/local_user/.node_repl_history
 
+test/
 HOWTO.md
 TODO.md

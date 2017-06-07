@@ -10,32 +10,77 @@ services:
         volumes:
             - ${MOUNT}/${WEB_ROOT}:/var/www/sites:rw
 
-    ### Workspace Container #####################################
-    workspace:
-        container_name: workspace
+    ### Gitlab Container ########################################
+    gitlab:
+        container_name: gitlab
+        links:
+            - mariadb
         build:
-            context: ./workspace
+            context: ./gitlab
             args:
-                - PUID=${PUID}
-                - PGID=${PGID}
-                - LOCAL_USER=${LOCAL_USER}
-                - GIT_NAME=${GIT_NAME}
-                - GIT_EMAIL=${GIT_EMAIL}
-                - BIN_PATH=/usr/local/bin/
-        volumes_from:
-            - application
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+                - GITLAB_ADMIN_EMAIL=${GITLAB_ADMIN_EMAIL}
+                - GITLAB_ADMIN_PASSWORD=${GITLAB_ADMIN_PASSWORD}
+                - GITLAB_LOCAL_USER=${GITLAB_LOCAL_USER}
+                - GITLAB_MYSQL_USER=${GITLAB_MYSQL_USER}
+                - GITLAB_MYSQL_PASSWORD=${GITLAB_MYSQL_PASSWORD}
+                - GITLAB_MYSQL_DATABASE=${GITLAB_MYSQL_DATABASE}
+                - GITLAB_RAILS_ENV=${GITLAB_RAILS_ENV}
         volumes:
-            - ${MOUNT}/workspace/etc/php:/etc/php:rw
-            - ${MOUNT}/workspace/home/local_user:/home/${LOCAL_USER}:rw
+            - ${MOUNT}/_data/gitlab/repositories/:/home/git/repositories/:rw
+            - ${MOUNT}/_data/logs/gitlab/:/home/git/gitlab/log/:rw
+            - ${MOUNT}/gitlab/gitlab.conf:/etc/default/gitlab:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/unicorn.rb:/home/git/gitlab/config/unicorn.rb:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/gitlab.yml:/home/git/gitlab/config/gitlab.yml:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/mail_room.yml:/home/git/gitlab/config/mail_room.yml:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/resque.yml:/home/git/gitlab/config/resque.yml:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/environments/development.rb:/home/git/gitlab/config/environments/development.rb:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/environments/production.rb:/home/git/gitlab/config/environments/production.rb:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab/config/environments/test.rb:/home/git/gitlab/config/environments/test.rb:rw
+            - ${MOUNT}/gitlab/home/local_user/gitlab-shell/config.yml:/home/git/gitlab-shell/config.yml:rw
+            - ${MOUNT}/gitlab/home/local_user/.ssh/authorized_keys:/home/git/.ssh/authorized_keys:rw
+            - ${MOUNT}/gitlab/redis/redis.conf:/etc/gitlab/redis/redis.conf/:rw
+            - ${MOUNT}/gitlab/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
-                ipv4_address: 172.16.0.2
-                ipv6_address: 2001:3984:3989::2
-        tty: true
+                ipv4_address: 172.16.0.8
+                ipv6_address: 2001:3984:3989::8
+
+    ### MariaDB Container #######################################
+    mariadb:
+        container_name: mariadb
+        build:
+            context: ./mariadb
+            args:
+                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
+        environment:
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        ports:
+            - "3306:3306"
+        volumes:
+            - ${MOUNT}/_data/logs/mariadb/mysql.log:/var/log/mysql.log:rw
+            - ${MOUNT}/_data/logs/mariadb/mysql.err:/var/log/mysql.err:rw
+            - ${MOUNT}/_data/logs/mariadb/mysql:/var/log/mysql:rw
+            - ${MOUNT}/_data/mariadb:/var/lib/mysql:rw   # mysql data directory
+            - ${MOUNT}/mariadb/etc/mysql:/etc/mysql:ro # config directory
+            - ${MOUNT}/mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+        entrypoint: /usr/bin/entrypoint.sh
+        networks:
+            vlan0:
+                ipv4_address: 172.16.0.7
+                ipv6_address: 2001:3984:3989::7
 
     ### Nginx Server Container ##################################
     nginx:
         container_name: nginx
+        links:
+            - gitlab
+            - php56-fpm
+            - php70-fpm
+            - php71-fpm
         build:
             context: ./nginx
             args:
@@ -76,8 +121,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ${MOUNT}/_data/logs/php/php56-fpm.log:/var/log/php-fpm.log:rw
-            - ${MOUNT}/_data/logs/php/php56-opcache.log:/var/log/php-opcache.log:rw
+            - ${MOUNT}/_data/logs/php-fpm/php56-fpm.log:/var/log/php-fpm.log:rw
+            - ${MOUNT}/_data/logs/php-fpm/php56-opcache.log:/var/log/php-opcache.log:rw
             - ${MOUNT}/php/5.6/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ${MOUNT}/php/5.6/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -104,8 +149,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ${MOUNT}/_data/logs/php/php70-fpm.log:/var/log/php-fpm.log:rw
-            - ${MOUNT}/_data/logs/php/php70-opcache.log:/var/log/php-opcache.log:rw
+            - ${MOUNT}/_data/logs/php-fpm/php70-fpm.log:/var/log/php-fpm.log:rw
+            - ${MOUNT}/_data/logs/php-fpm/php70-opcache.log:/var/log/php-opcache.log:rw
             - ${MOUNT}/php/7.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ${MOUNT}/php/7.0/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -132,8 +177,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ${MOUNT}/_data/logs/php/php71-fpm.log:/var/log/php-fpm.log:rw
-            - ${MOUNT}/_data/logs/php/php71-opcache.log:/var/log/php-opcache.log:rw
+            - ${MOUNT}/_data/logs/php-fpm/php71-fpm.log:/var/log/php-fpm.log:rw
+            - ${MOUNT}/_data/logs/php-fpm/php71-opcache.log:/var/log/php-opcache.log:rw
             - ${MOUNT}/php/7.1/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ${MOUNT}/php/7.1/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -146,31 +191,30 @@ services:
                 ipv4_address: 172.16.0.6
                 ipv6_address: 2001:3984:3989::6
 
-    ### MariaDB Container #######################################
-    mariadb:
-        container_name: mariadb
+    ### Workspace Container #####################################
+    workspace:
+        container_name: workspace
         build:
-            context: ./mariadb
+            context: ./workspace
             args:
-                - DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
-        environment:
-            MYSQL_USER: ${MYSQL_USER}
-            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-        ports:
-            - "3306:3306"
+                - PUID=${PUID}
+                - PGID=${PGID}
+                - LOCAL_USER=${LOCAL_USER}
+                - GIT_NAME=${GIT_NAME}
+                - GIT_EMAIL=${GIT_EMAIL}
+                - BIN_PATH=/usr/local/bin/
+        volumes_from:
+            - application
         volumes:
-            - ${MOUNT}/_data/logs/mariadb/mysql.log:/var/log/mysql.log:rw
-            - ${MOUNT}/_data/logs/mariadb/mysql.err:/var/log/mysql.err:rw
-            - ${MOUNT}/_data/logs/mariadb/mysql:/var/log/mysql:rw
-            - ${MOUNT}/_data/mysql:/var/lib/mysql:rw   # mysql data directory
-            - ${MOUNT}/mariadb/etc/mysql:/etc/mysql:ro # config directory
-            - ${MOUNT}/mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
+            - ${MOUNT}/workspace/etc/php:/etc/php:rw
+            - ${MOUNT}/workspace/home/local_user:/home/${LOCAL_USER}:rw
+            - ${MOUNT}/workspace/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
-                ipv4_address: 172.16.0.7
-                ipv6_address: 2001:3984:3989::7
+                ipv4_address: 172.16.0.2
+                ipv6_address: 2001:3984:3989::2
+        tty: true
 
 ### Networks Setup ##############################################
 networks:

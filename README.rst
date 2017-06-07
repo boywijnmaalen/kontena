@@ -80,6 +80,7 @@ Components
 * `Nginx`_
 * `PHP-FPM`_
 * `MariaDB`_
+* `Gitlab CE`_
 
 Workspace
 ---------
@@ -200,6 +201,12 @@ Connect to MariaDB
 ~~~~~~~~~~~~~~~~~~
 
 Connect to Mariadb by using IP ``172.16.0.7``
+
+Gitlab CE
+---------
+
+`GitLab <https://about.gitlab.com>`_ is a web-based Git repository manager with wiki and issue tracking features, using an open source license.
+
 
 Docker
 ======

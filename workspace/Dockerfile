@@ -33,8 +33,12 @@ RUN apt-get update \
         git \
         sudo \
         wget \
+        tcpdump \
+        telnet \
+        inetutils-ping \
         nodejs \
-        yarn
+        yarn \
+    && update-alternatives --set editor /usr/bin/vim.basic
 
 # install PHP versions
 RUN for i in 5.6 7.0 7.1; do \
@@ -110,10 +114,14 @@ RUN \
 RUN npm install -g \
         bower \
         gulp \
-        node-sass
+        node-sass \
+        webpack
 
 # allow the local user to execute sudo without requiring a password
 RUN sed -i "s|${LOCAL_USER} ALL=(ALL) ALL|${LOCAL_USER} ALL=(ALL) NOPASSWD: ALL|" "/etc/sudoers"
+
+# add gitlab.dev.local to /etc/hosts, 172.16.0.8 is Gitlab
+RUN echo "172.16.0.8	gitlab.dev.local" >> /etc/hosts
 
 # clean up
 RUN chown -R ${LOCAL_USER} /home/admin \
@@ -122,3 +130,6 @@ RUN chown -R ${LOCAL_USER} /home/admin \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc /usr/share/locale /var/log/apt/* /var/log/*.log \
     && dpkg -la | awk '{print $2}' | grep '\-dev' | xargs apt-get remove -y \
     && rm -rvf /etc/php/*
+
+# NPM
+EXPOSE 4200
