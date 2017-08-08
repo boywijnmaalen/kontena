@@ -16,7 +16,9 @@ gitconfig="[user]
 [color]
     ui = true"
 
-# create .gitconfig in the local_user directory
+#################################################
+# create .gitconfig in the local_user directory #
+#################################################
 if [ ! -e "${WORKSPACE_DIR}/home/local_user/.gitconfig" ]; then \
     echo "${gitconfig}" > "${WORKSPACE_DIR}/home/local_user/.gitconfig" \
 ;fi
@@ -55,7 +57,9 @@ for php_version in 5.6 7.0 7.1; do
 done
 
 
-# start building entrypoint.sh
+################################
+# start building entrypoint.sh #
+################################
 entrypoint_filename=${WORKSPACE_DIR}/entrypoint.sh
 
 # create entrypoint.sh
@@ -64,6 +68,12 @@ entrypoint="#!/usr/bin/env bash
 # add gitlab.dev.local to /etc/hosts, 172.16.0.8 is gitlab
 # added for command for command \'git clone git@gitlab.dev.local:namspace/project.git\'
 echo \"172.16.0.8	gitlab.dev.local\" >> /etc/hosts
+
+# chmod all SSH keys to 600 (except .files)
+chmod 600 /home/admin/.ssh/*
+
+# make public keys readable to other users
+chmod 644 /home/admin/.ssh/*.pub
 
 # make the container run forever
 /sbin/my_init"

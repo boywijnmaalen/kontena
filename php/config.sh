@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-log_dir=${LOGS_DIR}/php-fpm
+log_dir=${LOG_DIR}/php-fpm
 
 directories=(
     ${log_dir}

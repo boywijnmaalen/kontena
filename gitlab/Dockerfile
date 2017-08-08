@@ -4,19 +4,12 @@ ARG DEV_ENVIRONMENT=${DEV_ENVIRONMENT}
 ARG GITLAB_ADMIN_EMAIL=${GITLAB_ADMIN_EMAIL}
 ARG GITLAB_ADMIN_PASSWORD=${GITLAB_ADMIN_PASSWORD}
 ARG GITLAB_LOCAL_USER=${GITLAB_LOCAL_USER}
+ARG GITLAB_LOCAL_USER_PUID=${GITLAB_LOCAL_USER_PUID}
 ARG GITLAB_MYSQL_USER=${GITLAB_MYSQL_USER}
 ARG GITLAB_MYSQL_PASSWORD=${GITLAB_MYSQL_PASSWORD}
 ARG GITLAB_MYSQL_DATABASE=${GITLAB_MYSQL_DATABASE}
 ARG GITLAB_RAILS_ENV=production
 ARG GITLAB_RESET_DATABASE=false
-
-# output message wheter a new or existing database will be used
-RUN if [ ${GITLAB_RESET_DATABASE} = true ]; then \
-
-    echo "\033[0;32m===> Gitlab will be installed with a clean database. Abort if you do not want this and \033[4;32mremove the build-arg 'GITLAB_RESET_DATABASE'\033[0m" \
-;else \
-    echo "\033[0;31m===> Gitlab will be installed using an existing database. Abort if you want Gitlab to be installed with a clean database, add; \033[4;31m'--build-arg GITLAB_RESET_DATABASE=true'\033[0;31m to your docker build command\033[0m" \
-;fi
 
 # https://www.kernel.org/pub/software/scm/git/
 ARG GIT_VERSION=2.9.4
@@ -24,8 +17,8 @@ ARG GIT_VERSION=2.9.4
 ARG RUBY_VERSION=2.4.1
 # https://golang.org/dl/
 ARG GO_VERSION=1.8.3
-# https://gitlab.com/gitlab-org/gitlab-ce/branches
-ARG GITLAB_VERSION=9-3
+# https://gitlab.com/gitlab-org/gitlab-ce/branches?utf8=%E2%9C%93&search=9-4
+ARG GITLAB_VERSION=9-4
 
 # prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
 # change the way debconf (Debian Package Configuration System) configures packages
@@ -46,6 +39,7 @@ RUN apt-get update \
         libyaml-dev \
         libssl-dev \
         libgdbm-dev \
+        libre2-dev \
         libreadline-dev \
         libncurses5-dev \
         libffi-dev \
@@ -129,7 +123,7 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && apt-get install -y --no-install-recommends yarn
 
 # create a new git user for gitlab
-RUN adduser --disabled-login --gecos 'GitLab' ${GITLAB_LOCAL_USER}
+RUN adduser --disabled-login --uid ${GITLAB_LOCAL_USER_PUID} --gecos 'GitLab' ${GITLAB_LOCAL_USER}
 
 # install redis
 RUN apt-get install -y --no-install-recommends redis-server \
@@ -148,13 +142,15 @@ RUN apt-get install -y --no-install-recommends redis-server \
 WORKDIR /home/${GITLAB_LOCAL_USER}
 
 # install Gitlab, first enter ${GITLAB_LOCAL_USER} home directory
-RUN sudo -u ${GITLAB_LOCAL_USER} -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b ${GITLAB_VERSION}-stable gitlab
+RUN sudo -u ${GITLAB_LOCAL_USER} -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b ${GITLAB_VERSION}-stable
 
-WORKDIR /home/${GITLAB_LOCAL_USER}/gitlab
+WORKDIR /home/${GITLAB_LOCAL_USER}/gitlab-ce
 
 # start configuring Gitlab
 # Disabling use DNS in ssh since it tends to slow connecting
 RUN echo "UseDNS no" >> /etc/ssh/sshd_config \
+    # echo mariadb into hosts file
+    && echo "172.16.0.7 mariadb" >> /etc/hosts \
     # make sure GitLab can write to the log/ and tmp/ directories
     && chown -R ${GITLAB_LOCAL_USER} log/ \
     && chown -R ${GITLAB_LOCAL_USER} tmp/ \
@@ -171,12 +167,13 @@ RUN echo "UseDNS no" >> /etc/ssh/sshd_config \
     && chmod -R ug+rwX shared/pages/ \
     # copy the GitLab service
     && cp lib/support/init.d/gitlab /etc/init.d/gitlab \
+    # copy gitlab config
     && cp lib/support/init.d/gitlab.default.example /etc/default/gitlab \
     # make GitLab start on boot:
     && update-rc.d gitlab defaults 21 \
     # restrict Gitaly socket access
-    && chmod 0700 /home/${GITLAB_LOCAL_USER}/gitlab/tmp/sockets/private \
-    && chown ${GITLAB_LOCAL_USER} /home/${GITLAB_LOCAL_USER}/gitlab/tmp/sockets/private \
+    && chmod 0700 /home/${GITLAB_LOCAL_USER}/gitlab-ce/tmp/sockets/private \
+    && chown ${GITLAB_LOCAL_USER} /home/${GITLAB_LOCAL_USER}/gitlab-ce/tmp/sockets/private \
     # setup Logrotate
     && cp lib/support/logrotate/gitlab /etc/logrotate.d/gitlab
 
@@ -209,32 +206,29 @@ RUN mkdir /home/${GITLAB_LOCAL_USER}/repositories \
     # as we installed git from source we need to change the Git executable path in our config/gitlab.yml config file
     && sed -i -e 's|bin_path: /usr/bin/git|bin_path: /usr/local/bin/git|g' config/gitlab.yml \
     # update database credentials
-    # two reasons for doing this during build;
-    # - Gitlab needs - if requested - install a new database
-    # -
     && sed -i -e "s|database: gitlabhq_production|database: ${GITLAB_MYSQL_DATABASE}|g" config/database.yml \
     && sed -i -e "s|username: git|username: ${GITLAB_MYSQL_USER}|g" config/database.yml \
     && sed -i -e "s|password: \"secure password\"|password: \"${GITLAB_MYSQL_PASSWORD}\"|g" config/database.yml \
     && sed -i -e "s|# host: localhost|host: mariadb|g" config/database.yml
 
-# initialize database and activate advanced features
-# https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/install/database_mysql.md
-# https://gist.github.com/steinkel/6855062
-RUN if [ ${GITLAB_RESET_DATABASE} = true ]; then \
-
-    echo "yes" | bundle exec rake gitlab:setup RAILS_ENV=${GITLAB_RAILS_ENV} GITLAB_ROOT_PASSWORD=${GITLAB_ADMIN_PASSWORD} GITLAB_ROOT_EMAIL=${GITLAB_ADMIN_EMAIL} \
-;fi
-
 # install Gems
 RUN bundle install --deployment --without development test postgres aws kerberos \
     # install gitlab-shell
-    && bundle exec rake gitlab:shell:install REDIS_URL=unix:/var/run/redis/redis.sock RAILS_ENV=${GITLAB_RAILS_ENV} SKIP_STORAGE_VALIDATION=true \
+    && bundle exec rake "gitlab:shell:install" REDIS_URL=unix:/var/run/redis/redis.sock RAILS_ENV=${GITLAB_RAILS_ENV} SKIP_STORAGE_VALIDATION=true \
     # install gitlab-workhorse
     && bundle exec rake "gitlab:workhorse:install[/home/${GITLAB_LOCAL_USER}/gitlab-workhorse]" RAILS_ENV=${GITLAB_RAILS_ENV} \
     # install Gitaly
     && bundle exec rake "gitlab:gitaly:install[/home/${GITLAB_LOCAL_USER}/gitaly]" RAILS_ENV=${GITLAB_RAILS_ENV} \
     # install assets, update node dependencies and recompile assets
     && bundle exec rake yarn:install gitlab:assets:compile RAILS_ENV=${GITLAB_RAILS_ENV} NODE_ENV=${GITLAB_RAILS_ENV}
+
+# update Gems to the latest version
+RUN for i in "gitlab-shell" "gitlab-workhorse" "gitaly"; do \
+    cd /home/${GITLAB_LOCAL_USER}/${i} \
+    && echo "Start checking out latest tag for '${i}'" \
+    && git fetch --tags \
+    && git checkout $(git tag | grep v[0-9] | sort -V | tail -1) \
+;done
 
 
 USER root

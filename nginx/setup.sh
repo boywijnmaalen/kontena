@@ -17,7 +17,9 @@ nginx_log_path="/var/log/nginx/"
 nginx_error_log_file="${nginx_log_path}error.log"
 nginx_access_log_file="${nginx_log_path}access.log"
 
-# start building entrypoint.sh
+################################
+# start building entrypoint.sh #
+################################
 entrypoint="#!/usr/bin/env bash
 
 # check if nginx directory exists

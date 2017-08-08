@@ -57,35 +57,28 @@ Go to your docker folder
 $ cd <your Docker folder>
 ```
 
+
 ### #6. 
-
-Create a new docker-compose-with-nfs.yml which is based on your original docker-compose.yml.
-
-```bash
-$ cp ./docker-compose.yml ./docker-compose-with-nfs.yml
-```
-
-### #7. 
 
 Rewrite all volume paths
 
 - replace /**Users/\<your-mac-username\>**/www -> /**mnt/mac_user**/www
 
 
-### #8.
+### #7.
 
-Start your container(s) by providing the newly created docker-compose-with-nfs.yml.
+Start your container(s) by providing the newly created docker-compose-nfs.yml.
 
 ```bash
-$ docker-compose -f docker-compose-with-nfs.yml up -d
+$ docker-compose -f docker-compose-nfs.yml up -d
 ```
 
-### #8a. [**Optional**]
+### #8. [**Optional**]
 
 If your containers were already build we need to rebuild them by adding the --build flag.
 
 ```bash
-$ docker-compose -f docker-compose-with-nfs.yml up -d --build
+$ docker-compose -f docker-compose-nfs.yml up -d --build
 ```
 
 ## Rebooted Mac/restarted Docker?

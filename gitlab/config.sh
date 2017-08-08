@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-data_dir=${DATA_DIR}/gitlab
-log_dir=${LOGS_DIR}/gitlab
+data_dir=${DATA_DIR}/gitlab/repositories
+log_dir=${LOG_DIR}/gitlab
 project_dir=${ROOT_DIR}/gitlab
 
 directories=(
@@ -11,6 +11,7 @@ directories=(
 );
 
 files=(
+    ${log_dir}/application.log
     ${log_dir}/gitaly.log
     ${log_dir}/gitlab-workhorse.log
     ${log_dir}/sidekiq.log

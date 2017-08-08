@@ -3,16 +3,16 @@ FROM jedisct1/phusion-baseimage-latest
 # imported! because the terminal does not support odd characters coming from the repository name ppa:ondrej/php
 ENV LC_ALL C.UTF-8
 
-ARG PUID=1000
-ARG PGID=1000
-ARG LOCAL_USER=admin
+ARG WORKSPACE_LOCAL_USER_PUID=1000
+ARG WORKSPACE_LOCAL_USER_PGUID=1000
+ARG WORKSPACE_LOCAL_USER=admin
 ARG GIT_NAME="Firstname Lastname"
 ARG GIT_EMAIL=firstname.lastname@company.org
 ARG BIN_PATH=/usr/local/bin/
 
 # add a non-root user
-RUN groupadd -g ${PGID} ${LOCAL_USER} && \
-    useradd -u ${PUID} -g ${LOCAL_USER} -m ${LOCAL_USER}
+RUN groupadd -g ${WORKSPACE_LOCAL_USER_PGUID} ${WORKSPACE_LOCAL_USER} && \
+    useradd -m -u ${WORKSPACE_LOCAL_USER_PUID} -g ${WORKSPACE_LOCAL_USER_PGUID} ${WORKSPACE_LOCAL_USER}
 
 # add PHP 7.1, NodeJS & Yarn repositories
 RUN add-apt-repository -y ppa:ondrej/php \
@@ -38,6 +38,7 @@ RUN apt-get update \
         inetutils-ping \
         nodejs \
         yarn \
+        mysql-client \
     && update-alternatives --set editor /usr/bin/vim.basic
 
 # install PHP versions
@@ -118,13 +119,10 @@ RUN npm install -g \
         webpack
 
 # allow the local user to execute sudo without requiring a password
-RUN sed -i "s|${LOCAL_USER} ALL=(ALL) ALL|${LOCAL_USER} ALL=(ALL) NOPASSWD: ALL|" "/etc/sudoers"
-
-# add gitlab.dev.local to /etc/hosts, 172.16.0.8 is Gitlab
-RUN echo "172.16.0.8	gitlab.dev.local" >> /etc/hosts
+RUN sed -i "s|${WORKSPACE_LOCAL_USER} ALL=(ALL) ALL|${WORKSPACE_LOCAL_USER} ALL=(ALL) NOPASSWD: ALL|" "/etc/sudoers"
 
 # clean up
-RUN chown -R ${LOCAL_USER} /home/admin \
+RUN chown -R ${WORKSPACE_LOCAL_USER} /home/admin \
     && apt-get clean \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc /usr/share/locale /var/log/apt/* /var/log/*.log \

@@ -22,23 +22,25 @@ services:
                 - GITLAB_ADMIN_EMAIL=${GITLAB_ADMIN_EMAIL}
                 - GITLAB_ADMIN_PASSWORD=${GITLAB_ADMIN_PASSWORD}
                 - GITLAB_LOCAL_USER=${GITLAB_LOCAL_USER}
+                - GITLAB_LOCAL_USER_PUID=${GITLAB_LOCAL_USER_PUID}
                 - GITLAB_MYSQL_USER=${GITLAB_MYSQL_USER}
                 - GITLAB_MYSQL_PASSWORD=${GITLAB_MYSQL_PASSWORD}
                 - GITLAB_MYSQL_DATABASE=${GITLAB_MYSQL_DATABASE}
                 - GITLAB_RAILS_ENV=${GITLAB_RAILS_ENV}
         volumes:
-            - ./_data/gitlab/repositories/:/home/git/repositories/:rw
-            - ./_data/logs/gitlab/:/home/git/gitlab/log/:rw
+            - ./_src/data/gitlab/repositories/:/home/${GITLAB_LOCAL_USER}/repositories/:rw
+            - ./_src/logs/gitlab/:/home/${GITLAB_LOCAL_USER}/gitlab-ce/log/:rw
             - ./gitlab/gitlab.conf:/etc/default/gitlab:rw
-            - ./gitlab/home/local_user/gitlab/config/unicorn.rb:/home/git/gitlab/config/unicorn.rb:rw
-            - ./gitlab/home/local_user/gitlab/config/gitlab.yml:/home/git/gitlab/config/gitlab.yml:rw
-            - ./gitlab/home/local_user/gitlab/config/mail_room.yml:/home/git/gitlab/config/mail_room.yml:rw
-            - ./gitlab/home/local_user/gitlab/config/resque.yml:/home/git/gitlab/config/resque.yml:rw
-            - ./gitlab/home/local_user/gitlab/config/environments/development.rb:/home/git/gitlab/config/environments/development.rb:rw
-            - ./gitlab/home/local_user/gitlab/config/environments/production.rb:/home/git/gitlab/config/environments/production.rb:rw
-            - ./gitlab/home/local_user/gitlab/config/environments/test.rb:/home/git/gitlab/config/environments/test.rb:rw
-            - ./gitlab/home/local_user/gitlab-shell/config.yml:/home/git/gitlab-shell/config.yml:rw
-            - ./gitlab/home/local_user/.ssh/authorized_keys:/home/git/.ssh/authorized_keys:rw
+            - ./gitlab/home/local_user/gitaly/config.toml:/home/${GITLAB_LOCAL_USER}/gitaly/config.toml:rw
+            - ./gitlab/home/local_user/gitlab/config/unicorn.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/unicorn.rb:rw
+            - ./gitlab/home/local_user/gitlab/config/gitlab.yml:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/gitlab.yml:rw
+            - ./gitlab/home/local_user/gitlab/config/mail_room.yml:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/mail_room.yml:rw
+            - ./gitlab/home/local_user/gitlab/config/resque.yml:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/resque.yml:rw
+            - ./gitlab/home/local_user/gitlab/config/environments/development.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/environments/development.rb:rw
+            - ./gitlab/home/local_user/gitlab/config/environments/production.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/environments/production.rb:rw
+            - ./gitlab/home/local_user/gitlab/config/environments/test.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/environments/test.rb:rw
+            - ./gitlab/home/local_user/gitlab-shell/config.yml:/home/${GITLAB_LOCAL_USER}/gitlab-shell/config.yml:rw
+            - ./gitlab/home/local_user/.ssh/authorized_keys:/home/${GITLAB_LOCAL_USER}/.ssh/authorized_keys:rw
             - ./gitlab/redis/redis.conf:/etc/gitlab/redis/redis.conf/:rw
             - ./gitlab/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
         entrypoint: /usr/bin/entrypoint.sh
@@ -61,10 +63,10 @@ services:
         ports:
             - "3306:3306"
         volumes:
-            - ./_data/logs/mariadb/mysql.log:/var/log/mysql.log:rw
-            - ./_data/logs/mariadb/mysql.err:/var/log/mysql.err:rw
-            - ./_data/logs/mariadb/mysql:/var/log/mysql:rw
-            - ./_data/mysql:/var/lib/mysql:rw   # mysql data directory
+            - ./_src/logs/mariadb/mysql.log:/var/log/mysql.log:rw
+            - ./_src/logs/mariadb/mysql.err:/var/log/mysql.err:rw
+            - ./_src/logs/mariadb/mysql:/var/log/mysql:rw
+            - ./_src/data/mariadb:/var/lib/mysql:rw # mysql data directory
             - ./mariadb/etc/mysql:/etc/mysql:ro # config directory
             - ./mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
         entrypoint: /usr/bin/entrypoint.sh
@@ -76,6 +78,12 @@ services:
     ### Nginx Server Container ##################################
     nginx:
         container_name: nginx
+        links:
+            - gitlab
+            - php56-fpm
+            - php70-fpm
+            - php71-fpm
+            - workspace
         build:
             context: ./nginx
             args:
@@ -88,7 +96,7 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory (if it not yet exists, Docker will attempt to create it - deprecated behaviour!) and the container won't build
-            - ./_data/logs/nginx:/var/log/nginx:rw
+            - ./_src/logs/nginx:/var/log/nginx:rw
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
             - ./nginx/certs/:/etc/ssl/certs/custom/:ro
@@ -116,8 +124,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ./_data/logs/php-fpm/php56-fpm.log:/var/log/php-fpm.log:rw
-            - ./_data/logs/php-fpm/php56-opcache.log:/var/log/php-opcache.log:rw
+            - ./_src/logs/php-fpm/php56-fpm.log:/var/log/php-fpm.log:rw
+            - ./_src/logs/php-fpm/php56-opcache.log:/var/log/php-opcache.log:rw
             - ./php/5.6/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ./php/5.6/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -144,8 +152,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ./_data/logs/php-fpm/php70-fpm.log:/var/log/php-fpm.log:rw
-            - ./_data/logs/php-fpm/php70-opcache.log:/var/log/php-opcache.log:rw
+            - ./_src/logs/php-fpm/php70-fpm.log:/var/log/php-fpm.log:rw
+            - ./_src/logs/php-fpm/php70-opcache.log:/var/log/php-opcache.log:rw
             - ./php/7.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ./php/7.0/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -172,8 +180,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ./_data/logs/php-fpm/php71-fpm.log:/var/log/php-fpm.log:rw
-            - ./_data/logs/php-fpm/php71-opcache.log:/var/log/php-opcache.log:rw
+            - ./_src/logs/php-fpm/php71-fpm.log:/var/log/php-fpm.log:rw
+            - ./_src/logs/php-fpm/php71-opcache.log:/var/log/php-opcache.log:rw
             - ./php/7.1/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ./php/7.1/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -192,9 +200,9 @@ services:
         build:
             context: ./workspace
             args:
-                - PUID=${PUID}
-                - PGID=${PGID}
-                - LOCAL_USER=${LOCAL_USER}
+                - WORKSPACE_LOCAL_USER=${WORKSPACE_LOCAL_USER}
+                - WORKSPACE_LOCAL_USER_PUID=${WORKSPACE_LOCAL_USER_PUID}
+                - WORKSPACE_LOCAL_USER_PGUID=${WORKSPACE_LOCAL_USER_PGUID}
                 - GIT_NAME=${GIT_NAME}
                 - GIT_EMAIL=${GIT_EMAIL}
                 - BIN_PATH=/usr/local/bin/
@@ -202,7 +210,9 @@ services:
             - application
         volumes:
             - ./workspace/etc/php:/etc/php:rw
-            - ./workspace/home/local_user:/home/${LOCAL_USER}:rw
+            - ./workspace/home/local_user:/home/${WORKSPACE_LOCAL_USER}:rw
+            - ./workspace/entrypoint.sh:/usr/bin/entrypoint.sh/:ro
+        entrypoint: /usr/bin/entrypoint.sh
         networks:
             vlan0:
                 ipv4_address: 172.16.0.2
@@ -221,9 +231,3 @@ networks:
             gateway: 172.16.0.1
           - subnet: 2001:3984:3989::/64
             gateway: 2001:3984:3989::1
-
-
-### Volumes Setup ###############################################
-volumes:
-    mariadb:
-        driver: "local"

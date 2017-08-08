@@ -40,7 +40,9 @@ entrypoint_filename=${PHP_DIR}/entrypoint.sh
 php_fpm_log_file=/var/log/php-fpm.log
 php_opcahce_log_file=/var/log/php-opcache.log
 
-# create entrypoint.sh
+################################
+# start building entrypoint.sh #
+################################
 entrypoint="#!/usr/bin/env bash
 
 # check if php fpm log exists

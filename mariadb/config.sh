@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
 data_dir=${DATA_DIR}/mariadb
-log_dir=${LOGS_DIR}/mariadb
+log_dir=${LOG_DIR}/mariadb
 
 directories=(
     ${data_dir}
-    ${log_dir}
     ${log_dir}/mysql
 );
 

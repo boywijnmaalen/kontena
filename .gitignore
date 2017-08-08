@@ -12,8 +12,9 @@ Thumbs.db
 
 # project files
 .env
-_data/*
+_src/*
 docs/
+docker-compose-nfs.yml
 
 gitlab/entrypoint.sh
 gitlab/home/local_user/.ssh/authorized_keys
@@ -24,7 +25,7 @@ nginx/entrypoint.sh
 nginx/sites-available/*
 
 php/entrypoint.sh
-php/*.*/Dockerfile
+php/**/Dockerfile
 
 workspace/entrypoint.sh
 workspace/etc/php/*.*/cli/php.ini
@@ -36,6 +37,7 @@ workspace/home/local_user/.config/
 workspace/home/local_user/.npm/
 workspace/home/local_user/.bash_history
 workspace/home/local_user/.gitconfig
+workspace/home/local_user/.mysql_history
 workspace/home/local_user/.npmrc
 workspace/home/local_user/.sudo_as_admin_successful
 workspace/home/local_user/.v8flags*

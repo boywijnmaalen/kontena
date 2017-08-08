@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-log_dir=${LOGS_DIR}/nginx
+log_dir=${LOG_DIR}/nginx
 
 directories=(
     ${log_dir}

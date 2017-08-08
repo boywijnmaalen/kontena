@@ -464,7 +464,7 @@ production: &base
     storages: # You must have at least a `default` storage path.
       default:
         path: /home/git/repositories/
-        gitaly_address: unix:/home/git/gitlab/tmp/sockets/private/gitaly.socket # TCP connections are supported too (e.g. tcp://host:port)
+        gitaly_address: unix:/home/git/gitlab-ce/tmp/sockets/private/gitaly.socket # TCP connections are supported too (e.g. tcp://host:port)
 
   ## Backup settings
   backup:
@@ -496,7 +496,7 @@ production: &base
 
     # File that contains the secret key for verifying access for gitlab-shell.
     # Default is '.gitlab_shell_secret' relative to Rails.root (i.e. root of the GitLab app).
-    # secret_file: /home/git/gitlab/.gitlab_shell_secret
+    # secret_file: /home/git/gitlab-ce/.gitlab_shell_secret
 
     # Git over HTTP
     upload_pack: true
@@ -511,7 +511,7 @@ production: &base
   workhorse:
     # File that contains the secret key for verifying access for gitlab-workhorse.
     # Default is '.gitlab_workhorse_secret' relative to Rails.root (i.e. root of the GitLab app).
-    # secret_file: /home/git/gitlab/.gitlab_workhorse_secret
+    # secret_file: /home/git/gitlab-ce/.gitlab_workhorse_secret
 
   ## Git settings
   # CAUTION!

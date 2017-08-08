@@ -1,0 +1,4 @@
+socket_path = "/home/git/gitlab-ce/tmp/sockets/private/gitaly.socket"
+[[storage]]
+name = "default"
+path = "/home/git/repositories"

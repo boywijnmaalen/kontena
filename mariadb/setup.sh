@@ -11,9 +11,12 @@ create_dir
 # file check
 create_file
 
-# start building entrypoint.sh
+################################
+# start building entrypoint.sh #
+################################
 entrypoint_filename=${MARIADB_DIR}/entrypoint.sh
 log_path="/var/log/"
+mysql_data_path="/var/lib/mysql/"
 mysql_log_path="/var/log/mysql/"
 mysql_error_log_file="${log_path}mysql.err"
 mysql_log_file="${log_path}mysql.log"
@@ -23,19 +26,19 @@ entrypoint="#!/usr/bin/env bash
 # check if mysql directory exists
 if [ ! -d \"${mysql_log_path}\" ]; then \
 
-    touch ${mysql_log_path} \
+    touch ${mysql_log_path} \\
 ;fi
 
 # check if mysql error log exists
 if [ ! -e \"${mysql_error_log_file}\" ]; then \
 
-    touch \"${mysql_error_log_file}\" \
+    touch \"${mysql_error_log_file}\" \\
 ;fi
 
 # check if mysql access log exists
 if [ ! -e \"${mysql_log_file}\" ]; then \
 
-    touch \"${mysql_log_file}\" \
+    touch \"${mysql_log_file}\" \\
 ;fi
 
 # set log file permission áfter the mount-binding was done
@@ -44,6 +47,18 @@ chmod 740 \"${mysql_log_path}\"
 
 chown mysql:adm \"${mysql_error_log_file}\" \"${mysql_log_file}\"
 chmod 640 \"${mysql_error_log_file}\" \"${mysql_log_file}\"
+
+# set database directory/file permissions
+# check if mysql directory exists
+if [ ! -d \"${mysql_data_path}\" ]; then \
+
+    touch ${mysql_data_path} \\
+;fi
+
+chown -R mysql:adm \"${mysql_data_path}\"
+chmod 755 \"${mysql_data_path}\"
+find \"${mysql_data_path}*\" -type d -exec chmod 700 {} +
+find \"${mysql_data_path}*\" -type f -exec chmod 660 {} +
 
 # start mysql as user mysql
 su -s /bin/sh mysql -c \"/usr/sbin/mysqld\"
