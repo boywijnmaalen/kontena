@@ -27,13 +27,24 @@ service ssh start
 # start redis
 service redis-server start
 
-# add gitlab.dev.local to /etc/hosts, 172.16.0.3 is nginx
+# add gitlab.dev.local to /etc/hosts, 172.16.0.3 is nginx,
 # added for command \`bundle exec rake gitlab:check\`
 echo \"172.16.0.3	gitlab.dev.local\" >> /etc/hosts
 echo \"172.16.0.7	mariadb\" >> /etc/hosts
 
+# check if database host is up and running, if not wait for it
+while !(mysqladmin ping -h mariadb -u ${GITLAB_MYSQL_USER} -p${GITLAB_MYSQL_PASSWORD} > /dev/null 2>&1)
+do
+        echo \"Waiting for database connection...\" >> /home/${GITLAB_LOCAL_USER}/gitlab-ce/log/${GITLAB_RAILS_ENV}.log
+        sleep 2
+done
+
+echo \"Connected to database host!\" >> /home/${GITLAB_LOCAL_USER}/gitlab-ce/log/${GITLAB_RAILS_ENV}.log
+
 # setup/update database
 DATABASE_SHOW_RESULT=\`mysql -h mariadb -u ${GITLAB_MYSQL_USER} -p${GITLAB_MYSQL_PASSWORD} --skip-column-names -e \"SHOW DATABASES LIKE '${GITLAB_MYSQL_DATABASE}'\"\`
+
+echo \"INFO: Result of Gitlab Database check (should be '${GITLAB_MYSQL_DATABASE}'): '\${DATABASE_SHOW_RESULT}'\" >> /home/${GITLAB_LOCAL_USER}/gitlab-ce/log/${GITLAB_RAILS_ENV}.log
 
 if [ \"\${DATABASE_SHOW_RESULT}\" == \"${GITLAB_MYSQL_DATABASE}\" ]; then
 
