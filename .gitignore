@@ -21,6 +21,7 @@ gitlab/entrypoint.sh
 gitlab/home/local_user/.ssh/authorized_keys
 
 mariadb/entrypoint.sh
+mariadb/setup_*
 
 nginx/entrypoint.sh
 nginx/sites-available/*
