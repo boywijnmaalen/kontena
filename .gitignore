@@ -12,7 +12,8 @@ Thumbs.db
 
 # project files
 .env
-_src/*
+_data/*
+_logs/*
 docs/
 docker-compose-nfs.yml
 

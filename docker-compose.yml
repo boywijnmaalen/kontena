@@ -28,8 +28,8 @@ services:
                 - GITLAB_MYSQL_DATABASE=${GITLAB_MYSQL_DATABASE}
                 - GITLAB_RAILS_ENV=${GITLAB_RAILS_ENV}
         volumes:
-            - ./_src/data/gitlab/repositories/:/home/${GITLAB_LOCAL_USER}/repositories/:rw
-            - ./_src/logs/gitlab/:/home/${GITLAB_LOCAL_USER}/gitlab-ce/log/:rw
+            - ./_data/gitlab/repositories/:/home/${GITLAB_LOCAL_USER}/repositories/:rw
+            - ./_logs/gitlab/:/home/${GITLAB_LOCAL_USER}/gitlab-ce/log/:rw
             - ./gitlab/gitlab.conf:/etc/default/gitlab:rw
             - ./gitlab/home/local_user/gitaly/config.toml:/home/${GITLAB_LOCAL_USER}/gitaly/config.toml:rw
             - ./gitlab/home/local_user/gitlab/config/unicorn.rb:/home/${GITLAB_LOCAL_USER}/gitlab-ce/config/unicorn.rb:rw
@@ -63,10 +63,10 @@ services:
         ports:
             - "3306:3306"
         volumes:
-            - ./_src/logs/mariadb/mysql.log:/var/log/mysql.log:rw
-            - ./_src/logs/mariadb/mysql.err:/var/log/mysql.err:rw
-            - ./_src/logs/mariadb/mysql:/var/log/mysql:rw
-            - ./_src/data/mariadb:/var/lib/mysql:rw # mysql data directory
+            - ./_logs/mariadb/mysql.log:/var/log/mysql.log:rw
+            - ./_logs/mariadb/mysql.err:/var/log/mysql.err:rw
+            - ./_logs/mariadb/mysql:/var/log/mysql:rw
+            - ./_data/mariadb:/var/lib/mysql:rw # mysql data directory
             - ./mariadb/etc/mysql:/etc/mysql:ro # config directory
             - ./mariadb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
         entrypoint: /usr/bin/entrypoint.sh
@@ -96,7 +96,7 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory (if it not yet exists, Docker will attempt to create it - deprecated behaviour!) and the container won't build
-            - ./_src/logs/nginx:/var/log/nginx:rw
+            - ./_logs/nginx:/var/log/nginx:rw
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
             - ./nginx/certs/:/etc/ssl/certs/custom/:ro
@@ -124,8 +124,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ./_src/logs/php-fpm/php56-fpm.log:/var/log/php-fpm.log:rw
-            - ./_src/logs/php-fpm/php56-opcache.log:/var/log/php-opcache.log:rw
+            - ./_logs/php-fpm/php56-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php56-opcache.log:/var/log/php-opcache.log:rw
             - ./php/5.6/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ./php/5.6/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -152,8 +152,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ./_src/logs/php-fpm/php70-fpm.log:/var/log/php-fpm.log:rw
-            - ./_src/logs/php-fpm/php70-opcache.log:/var/log/php-opcache.log:rw
+            - ./_logs/php-fpm/php70-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php70-opcache.log:/var/log/php-opcache.log:rw
             - ./php/7.0/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ./php/7.0/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement
@@ -180,8 +180,8 @@ services:
         volumes:
             # important! mounting a single file (rather than a directory) only works if the target file on the host already exists!
             # Docker will otherwise assume a directory and the container won't build
-            - ./_src/logs/php-fpm/php71-fpm.log:/var/log/php-fpm.log:rw
-            - ./_src/logs/php-fpm/php71-opcache.log:/var/log/php-opcache.log:rw
+            - ./_logs/php-fpm/php71-fpm.log:/var/log/php-fpm.log:rw
+            - ./_logs/php-fpm/php71-opcache.log:/var/log/php-opcache.log:rw
             - ./php/7.1/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
             - ./php/7.1/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
             # not necessary if PHP_FPM_INSTALL_XDEBUG = false, but currently there is no way to wrap this in an if-statement

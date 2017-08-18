@@ -2,8 +2,8 @@
 
 # get project root directory
 ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../ && pwd )"
-DATA_DIR=${ROOT_DIR}/_src/data
-LOG_DIR=${ROOT_DIR}/_src/logs
+DATA_DIR=${ROOT_DIR}/_data
+LOG_DIR=${ROOT_DIR}/_logs
 SITE_DIR=${DATA_DIR}/sites
 
 # make sure we always start in project root
@@ -42,5 +42,5 @@ for container in "${containers[@]}"; do \
 ;done
 
 # set permissions for log files
-find ${ROOT_DIR}/_src/logs/* -type d -exec chmod 744 {} +
-find ${ROOT_DIR}/_src/logs/* -type f -exec chmod 640 {} +
+find ${ROOT_DIR}/_logs/* -type d -exec chmod 744 {} +
+find ${ROOT_DIR}/_logs/* -type f -exec chmod 640 {} +
