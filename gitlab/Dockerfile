@@ -12,13 +12,18 @@ ARG GITLAB_RAILS_ENV=production
 ARG GITLAB_RESET_DATABASE=false
 
 # https://www.kernel.org/pub/software/scm/git/
-ARG GIT_VERSION=2.9.4
+ARG GIT_VERSION=2.9.5
 # https://cache.ruby-lang.org/pub/ruby/
 ARG RUBY_VERSION=2.4.1
 # https://golang.org/dl/
 ARG GO_VERSION=1.8.3
-# https://gitlab.com/gitlab-org/gitlab-ce/branches?utf8=%E2%9C%93&search=9-4
-ARG GITLAB_VERSION=9-4
+# https://gitlab.com/gitlab-org/gitlab-ce/branches?utf8=%E2%9C%93&search=9-5
+# https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/update/9.4-to-9.5.md
+#   - need to update dependencies?
+#   - check changes in gitlab.yml config file
+#   - trusted_proxies
+#   - /home/git/gitlab/ --> /home/git/gitlab-ce/
+ARG GITLAB_VERSION=9-5
 
 # prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
 # change the way debconf (Debian Package Configuration System) configures packages
