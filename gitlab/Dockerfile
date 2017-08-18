@@ -72,6 +72,7 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         mlocate \
         net-tools \
         vim \
+        sudo \
         wget \
         tcpdump \
         telnet \

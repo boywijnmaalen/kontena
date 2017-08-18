@@ -21,8 +21,9 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         mlocate \
         net-tools \
         vim \
-        wget \
+        curl \
         sudo \
+        wget \
         tcpdump \
         telnet \
         inetutils-ping \

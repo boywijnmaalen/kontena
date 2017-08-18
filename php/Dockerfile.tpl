@@ -41,6 +41,7 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         mlocate \
         net-tools \
         vim \
+        curl \
         sudo \
         wget \
         tcpdump \

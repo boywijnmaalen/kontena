@@ -13,12 +13,16 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         mlocate \
         net-tools \
         vim \
-        wget \
+        curl \
         sudo \
+        wget \
         tcpdump \
         telnet \
         inetutils-ping \
     && update-alternatives --set editor /usr/bin/vim.basic \
 ;fi
+
+# copy setup_gitlab_user to the mariadb init directory
+COPY setup_gitlab_user.sql /docker-entrypoint-initdb.d
 
 EXPOSE 3306
