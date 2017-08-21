@@ -19,10 +19,11 @@ ARG RUBY_VERSION=2.4.1
 ARG GO_VERSION=1.8.3
 # https://gitlab.com/gitlab-org/gitlab-ce/branches?utf8=%E2%9C%93&search=9-5
 # https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/update/9.4-to-9.5.md
-#   - need to update dependencies?
-#   - check changes in gitlab.yml config file
-#   - trusted_proxies
-#   - /home/git/gitlab/ --> /home/git/gitlab-ce/
+#   - double check dependencies for updated requirements?
+#   - copy in new gitlab.yml config file
+#   - change: trusted_proxies
+#   - change: /home/git/gitlab/ --> /home/git/gitlab-ce/
+#   - change: bin_path: /usr/bin/git --> bin_path: /usr/local/bin/git
 ARG GITLAB_VERSION=9-5
 
 # prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
