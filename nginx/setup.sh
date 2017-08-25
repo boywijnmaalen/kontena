@@ -3,7 +3,7 @@
 NGINX_DIR=${ROOT_DIR}/nginx
 
 # load nginx config
-source ${NGINX_DIR}/config.sh
+source ${NGINX_DIR}/setup.conf
 
 # directory check
 create_dir

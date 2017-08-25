@@ -3,7 +3,7 @@
 MARIADB_DIR=${ROOT_DIR}/mariadb
 
 # load mariadb config
-source ${MARIADB_DIR}/config.sh
+source ${MARIADB_DIR}/setup.conf
 
 # directory check
 create_dir

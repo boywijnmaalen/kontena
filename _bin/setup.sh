@@ -14,6 +14,19 @@ mkdir -p ${DATA_DIR}
 mkdir -p ${LOG_DIR}
 mkdir -p ${SITE_DIR}
 
+# if .env file doesn't yet, abort the setup process
+if [ ! -f ${ROOT_DIR}/.env ]; then
+
+    echo "Can not continue setup script because file \"${ROOT_DIR}/.env\" does not exist yet";
+    exit 1;
+fi
+
+# if backup.conf does not yet exist, create
+if [ ! -f ${ROOT_DIR}/backup.conf ]; then
+
+    cp ${ROOT_DIR}/backup.conf.example ${ROOT_DIR}/backup.conf
+fi
+
 # load config
 source ${ROOT_DIR}/.env
 

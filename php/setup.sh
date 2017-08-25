@@ -3,7 +3,7 @@
 PHP_DIR=${ROOT_DIR}/php
 
 # load php config
-source ${PHP_DIR}/config.sh
+source ${PHP_DIR}/setup.conf
 
 # directory check
 create_dir

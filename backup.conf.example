@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# target location to store the backup file
+# - must be an absolute directory
+# - do NOT append ending slash
+target_dir=""
+
+# list of directories that we need backed up
+# - must be an absolute path
+# - do NOT append ending slash
+# - append '/*' to the path if you don't want the directory itself but its subdirectories separately backed up
+source_dirs=(
+#    "absolute_path_1"
+#    "absolute_path_2/*"
+#    "absolute_path_2/subdirectory_1/*"
+#    "absolute_path_2/subdirectory_2/*"
+#    "absolute_path_N"
+)
+
+# list of files and directories that are not to be included in the backup
+# - directories need a trailing slash
+excludes=(
+    # MAC resource fork files
+    ".DS_Store"
+    "._.DS_Store"
+    "._*"
+    "__MACOSX"
+
+    # Other system files
+    "Thumbs.db"
+)
+
+# MySQL
+# - leave 'mysql_host' if you don't want to backup MySQL databases
+mysql_host=
+mysql_user=
+mysql_pass=
+mysql_port=

@@ -3,7 +3,7 @@
 GITLAB_DIR=${ROOT_DIR}/gitlab
 
 # load gitlab config
-source ${GITLAB_DIR}/config.sh
+source ${GITLAB_DIR}/setup.conf
 
 # directory check
 create_dir
