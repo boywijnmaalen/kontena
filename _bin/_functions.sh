@@ -54,26 +54,33 @@ function in_array() {
     return 1
 }
 
+
+# output html plain
+function html_plain() {
+
+    echo "<span>${1}</span>"
+}
+
 # output html info
 function html_info() {
 
-    echo "<span style='display : block' class='info'>${1}</span>"
+    echo "<p style='display : block;' class='margin-reset info'>${1}</p>"
 }
 
 # output html ok
 function html_ok() {
 
-    echo "<span style='display : block' class='ok'>${1}</span>"
+    echo "<p style='display : block;' class='margin-reset ok'>${1}</p>"
 }
 
 # output html warning
 function html_warning() {
 
-    echo "<span style='display : block' class='warning'>${1}</span>"
+    echo "<p style='display : block;' class='margin-reset warning'>${1}</p>"
 }
 
 # output html error
 function html_error() {
 
-    echo "<span style='display : block' class='error'>${1}</span>"
+    echo "<p style='display : block;' class='margin-reset error'>${1}</p>"
 }

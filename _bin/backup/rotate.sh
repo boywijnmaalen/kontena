@@ -10,7 +10,8 @@ source "${ROOT_DIR}"/_bin/backup/_init.sh
 # create list of backup directories we want to keep! #
 ######################################################
 
-mail+=("rotate")
+# add line to mail body
+mail+=("<h2>&nbsp;&nbsp;Summary 'file rotation backup'</h2>")
 
 echo ""
 echo ""
@@ -71,7 +72,7 @@ for directory in "${removals[@]}"; do
 done
 
 # add stats
-stats+=("Backup directories rotate;${warnings_count};${errors_count}")
+stats+=("Summary 'file rotation backup';${warnings_count};${errors_count}")
 
 echo ""
 echo -e "\033[1;42m Finished rotating backup directories \033[0m"

@@ -19,7 +19,7 @@ source ${ROOT_DIR}/backup.conf
 source ${ROOT_DIR}/_bin/_functions.sh
 
 # create backup directory
-backup_directory=${target_dir}/$(date -j '+%Y%m%d')
+backup_directory="${target_dir}/$(date -j '+%Y%m%d')"
 if [ ! -d ${backup_directory} ]; then
 
     mkdir -p ${backup_directory}

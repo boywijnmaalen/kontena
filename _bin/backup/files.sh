@@ -6,12 +6,15 @@ ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../../ && pwd )"
 # init the script
 source "${ROOT_DIR}"/_bin/backup/_init.sh
 
+backup_directory+="/Files & Directories"
+
 #######################################
 # Starting backup files & directories #
 #######################################
 
 # add line to mail body
-mail+=("<h2>&nbsp;&nbsp;Summary 'backup files & directories'</h2>")
+mail+=("<br /><hr />")
+mail+=("<h2>&nbsp;&nbsp;Summary 'files & directories backup'</h2>")
 
 echo ""
 echo ""
@@ -84,7 +87,7 @@ for i in "${!compress_dirs[@]}"; do
     # echo & add line to mail body
     echo ""
     echo "${message}"
-    mail+=("${message}")
+    mail+=($(html_plain "${message}"))
 
     backup_filename="$(basename ${directory})"
     if [[ "${directory}" == *"${ROOT_DIR}"* ]]; then
@@ -150,14 +153,11 @@ for i in "${!compress_dirs[@]}"; do
 
     # echo & add line to mail body
     echo "${message}"
-    mail+=("${message}")
-
+    mail+=($(html_ok "${message}"))
 done
 
-mail+=("<br /><hr />")
-
 # add stats
-stats+=("Backup Files & Directories;${warnings_count};${errors_count}")
+stats+=("Summary 'files & directories backup';${warnings_count};${errors_count}")
 
 echo ""
 echo -e "\033[1;42m Finished backup files & directories \033[0m"

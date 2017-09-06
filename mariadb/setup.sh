@@ -24,19 +24,19 @@ mysql_log_file="${log_path}mysql.log"
 entrypoint="#!/usr/bin/env bash
 
 # check if mysql directory exists
-if [ ! -d \"${mysql_log_path}\" ]; then \
+if [ ! -d \"${mysql_log_path}\" ]; then \\
 
-    touch ${mysql_log_path} \\
+    mkdir -p ${mysql_log_path} \\
 ;fi
 
 # check if mysql error log exists
-if [ ! -e \"${mysql_error_log_file}\" ]; then \
+if [ ! -e \"${mysql_error_log_file}\" ]; then \\
 
     touch \"${mysql_error_log_file}\" \\
 ;fi
 
 # check if mysql access log exists
-if [ ! -e \"${mysql_log_file}\" ]; then \
+if [ ! -e \"${mysql_log_file}\" ]; then \\
 
     touch \"${mysql_log_file}\" \\
 ;fi
@@ -50,9 +50,9 @@ chmod 640 \"${mysql_error_log_file}\" \"${mysql_log_file}\"
 
 # set database directory/file permissions
 # check if mysql directory exists
-if [ ! -d \"${mysql_data_path}\" ]; then \
+if [ ! -d \"${mysql_data_path}\" ]; then \\
 
-    mkdir ${mysql_data_path} \\
+    mkdir -p ${mysql_data_path} \\
 ;fi
 
 chown -R mysql:adm \"${mysql_data_path}\"

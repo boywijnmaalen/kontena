@@ -6,11 +6,14 @@ ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../../ && pwd )"
 # init the script
 source "${ROOT_DIR}"/_bin/backup/_init.sh
 
+backup_directory+="/MySQL databases"
+
 ###################################
 # start backup up mysql databases #
 ###################################
 
 # add line to mail body
+mail+=("<br /><hr />")
 mail+=("<h2>&nbsp;&nbsp;Summary 'MySQL backup'</h2>")
 
 echo ""
@@ -53,12 +56,20 @@ for i in $(seq 1 "${connection_retries}"); do
             echo -e "\033[1;41m${message}\033[0m"
             mail+=($(html_error "${message}"))
 
+            # define message
+            message=" MySQL backup failed! "
+
+            # echo & add line to mail body
+            echo ""
+            echo -e "\033[1;41m${message}\033[0m"
+            mail+=($(html_error "${message}"))
+
             let errors_count++
 
             # add stats
             stats+=("Backup MySQL databases;${warnings_count};${errors_count}")
 
-            exit
+            return 1
         fi
 
         sleep 2
@@ -92,7 +103,6 @@ done
 databases=("${databases[@]}")
 
 # create mysql backup directory
-backup_directory+="/MySQL databases"
 if [ ! -d ${backup_directory} ]; then
 
     mkdir -p ${backup_directory}
@@ -110,7 +120,7 @@ for i in "${!databases[@]}"; do
     # echo & add line to mail body
     echo ""
     echo "${message}"
-    mail+=("${message}")
+    mail+=($(html_plain "${message}"))
 
     # create backup filename
     backup_filename="${database}.sql.gz"
@@ -160,7 +170,7 @@ for i in "${!databases[@]}"; do
 
     # echo & add line to mail body
     echo "${message}"
-    mail+=("${message}")
+    mail+=($(html_ok "${message}"))
 done
 
 echo ""
@@ -177,7 +187,7 @@ for skipped_database in "${exclude_dbs[@]}"; do
 done
 
 # add stats
-stats+=("Backup MySQL databases;${warnings_count};${errors_count}")
+stats+=("Summary 'MySQL backup';${warnings_count};${errors_count}")
 
 echo ""
 echo -e "\033[1;42m Finished MySQL backup \033[0m"

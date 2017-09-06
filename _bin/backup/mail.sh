@@ -43,6 +43,11 @@ tr.header {
     color: #1b1e21;
     background-color: #d6d8d9;
 }
+
+.margin-reset {
+    margin: 0;
+}
+
 .info {
     color: #004085;
     background-color: #cce5ff;
@@ -98,7 +103,7 @@ for stat in "${stats[@]}"; do
 done
 IFS="${oIFS}"
 
-echo "</table><br /><br /><hr /><br />"
+echo "</table><br /><br />"
 
 echo $(printf '%s<br />' "${mail[@]}")
 
