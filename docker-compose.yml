@@ -164,7 +164,7 @@ services:
             # Docker will otherwise assume a directory and the container won't build
             - ./_logs/cockroachdb:/var/log/cockroachdb:rw # log directory
             - ./_data/cockroachdb:/var/data/cockroachdb:rw # data directory
-            - ./cockroachdb/certs:/certs:ro # cert directory
+            - ./cockroachdb/certs:/certs:rw # cert directory
             - ./cockroachdb/entrypoint.sh:/usr/bin/entrypoint.sh:ro
         entrypoint: /usr/bin/entrypoint.sh
         networks:

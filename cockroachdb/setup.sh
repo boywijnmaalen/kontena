@@ -33,9 +33,12 @@ if [ ! -d \"${COCKROACH_LOG_DIR}\" ]; then \
     mkdir -p \"${COCKROACH_LOG_DIR}\" \\
 ;fi
 
+# set correct permissions for the certs
+chown -R root: \"/certs\"
+
 # set log file permission áfter the mount-binding was done
 chown -R cockroach: \"${COCKROACH_DATA_DIR}\" \"${COCKROACH_LOG_DIR}\"
-chmod 777 \"${COCKROACH_LOG_DIR}\" \"${COCKROACH_LOG_DIR}\"
+chmod -R 700 \"${COCKROACH_LOG_DIR}\" \"${COCKROACH_LOG_DIR}\" \"/certs\"
 
 # start cockroach
 cockroach start-single-node \\
