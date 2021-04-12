@@ -9,6 +9,7 @@ ENV LC_ALL C.UTF-8
 ARG WORKSPACE_LOCAL_USER_PUID=1000
 ARG WORKSPACE_LOCAL_USER_PGUID=1000
 ARG WORKSPACE_LOCAL_USER=admin
+ARG WORKSPACE_HOSTNAME=${WORKSPACE_HOSTNAME}
 ARG GIT_NAME="Firstname Lastname"
 ARG GIT_EMAIL=firstname.lastname@company.org
 ARG BIN_PATH=/usr/local/bin/
@@ -17,10 +18,15 @@ ARG PHP_VERSIONS
 ARG PHP72_MCRYPT_VERSION=1.0.2
 ARG PHP73_MCRYPT_VERSION=1.0.3
 ARG PHP74_MCRYPT_VERSION="6cf8c800f2926b65867b10dfe582bbb4596d1b7e"
-ARG PHP_LATEST_MCRYPT_VERSION="6cf8c800f2926b65867b10dfe582bbb4596d1b7e"
-
+ARG PHP_MCRYPT_VERSION="6cf8c800f2926b65867b10dfe582bbb4596d1b7e"
 # https://golang.org/dl/
 ARG GOLANG_VERSION=1.15.8
+# https://github.com/nvm-sh/nvm/tags
+ARG NVM_VERSION=v0.37.2
+# https://nodejs.org/en/download/current/
+ARG NVM_LATEST_LTS_VERSION=14.15.5
+ARG NVM_CURRENT_VERSION=15.8.0
+ENV NVM_DIR=/usr/local/nvm
 
 # prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
 # change the way debconf (Debian Package Configuration System) configures packages
@@ -36,15 +42,16 @@ RUN ["/bin/bash", "-c", "debconf-set-selections <<< \"localepurge localepurge/qu
     && ["/bin/bash", "-c", "debconf-set-selections <<< \"localepurge localepurge/verbose boolean true\""] \
     && ["/bin/bash", "-c", "debconf-set-selections <<< \"localepurge localepurge/nopurge multiselect en_US.UTF-8\""] \
     && ["/bin/bash", "-c", "debconf-set-selections <<< \"localepurge localepurge/dontbothernew boolean false\""] \
-    && ["/bin/bash", "-c", "debconf-set-selections <<< \"localepurge localepurge/none_selected boolean false\""]
+    && ["/bin/bash", "-c", "debconf-set-selections <<< \"localepurge localepurge/none_selected boolean false\""] \
+    && ["/bin/bash", "-c", "debconf-set-selections <<< \"postfix postfix/mailname string ${WORKSPACE_HOSTNAME}\""] \
+    && ["/bin/bash", "-c", "debconf-set-selections <<< \"postfix postfix/main_mailer_type string 'Internet Site'\""]
 
 # add a non-root user
 RUN groupadd -g ${WORKSPACE_LOCAL_USER_PGUID} ${WORKSPACE_LOCAL_USER} \
     && useradd -m -u ${WORKSPACE_LOCAL_USER_PUID} -g ${WORKSPACE_LOCAL_USER_PGUID} ${WORKSPACE_LOCAL_USER}
 
-# add PHP 7.x/8.x, NodeJS & Yarn repositories
+# add PHP 7.x/8.x & Yarn repositories
 RUN add-apt-repository -y ppa:ondrej/php \
-    && curl -sL https://deb.nodesource.com/setup_15.x | bash \
     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
@@ -70,19 +77,38 @@ RUN apt-get install -y --no-install-recommends \
         net-tools \
         vim \
         curl \
-        git \
         sudo \
         wget \
         tcpdump \
         telnet \
+        traceroute \
+        dnsutils \
+        procps \
         inetutils-ping \
-        nodejs \
         yarn \
         mysql-client \
+        zip \
+        unzip \
+        git \
         # mcrypt dependency
         libmcrypt-dev \
+        postfix \
     # set vim as default editor
     && update-alternatives --set editor /usr/bin/vim.basic
+
+# install two versions of node using NVM (Node Version Manager)
+RUN mkdir -p ${NVM_DIR} \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh | bash \
+    && chmod +x ${NVM_DIR}/nvm.sh \
+    # source bashrc for NVM (node/npm) to be loaded
+    && . ~/.bashrc \
+    # install current version (latest features)
+    && nvm install ${NVM_CURRENT_VERSION} \
+    # install latest LTS version (recommended for most users)
+    && nvm install ${NVM_LATEST_LTS_VERSION} \
+    # set the latest LTS version as default
+    && nvm alias default ${NVM_LATEST_LTS_VERSION} \
+    && nvm use default
 
 # install PHP versions
 # https://www.php.net/manual/en/extensions.alphabetical.php
@@ -104,6 +130,7 @@ RUN for i in ${PHP_VERSIONS}; do \
         php${i}-mysqlnd \
         php${i}-pgsql \
         php${i}-readline \
+        php${i}-soap \
         php${i}-sqlite \
         php${i}-sqlite3 \
         php${i}-xdebug \
@@ -133,7 +160,7 @@ RUN for i in ${PHP_VERSIONS}; do \
             git checkout ${PHP74_MCRYPT_VERSION} \
         # only PHP 8.0 remains
         ;else \
-            git checkout ${PHP_LATEST_MCRYPT_VERSION} \
+            git checkout ${PHP_MCRYPT_VERSION} \
         ;fi \
         # https://pear.php.net/manual/en/pyrus.commands.build.php
         && phpize${i} --clean \
@@ -160,52 +187,63 @@ RUN rm -rf /tmp/mcrypt
 RUN \
     # install latest Composer globally
     curl -LsS https://getcomposer.org/composer.phar -o ${BIN_PATH}composer \
-    && chmod a+x ${BIN_PATH}composer \
+    && chmod u+x ${BIN_PATH}composer \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}composer \
     \
     # install Composer V1 globally
-    && curl -LsS https://getcomposer.org/composer-1.phar -o ${BIN_PATH}composer_v1 \
-    && chmod a+x ${BIN_PATH}composer_v1 \
+    && curl -LsS https://getcomposer.org/composer-1.phar -o ${BIN_PATH}composerv1 \
+    && chmod u+x ${BIN_PATH}composerv1 \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}composerv1 \
     \
     # install CodeCeption globally
     && curl -LsS http://codeception.com/codecept.phar -o ${BIN_PATH}codeception \
-    && chmod a+x ${BIN_PATH}codeception \
+    && chmod u+x ${BIN_PATH}codeception \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}codeception \
     \
     # install Deployer globally
     && curl -LsS http://deployer.org/deployer.phar -o ${BIN_PATH}deployer \
-    && chmod a+x ${BIN_PATH}deployer \
+    && chmod u+x ${BIN_PATH}deployer \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}deployer \
     \
     # install PHPmd globally
     && curl -LsS https://phpmd.org/static/latest/phpmd.phar -o ${BIN_PATH}phpmd \
-    && chmod a+x ${BIN_PATH}phpmd \
+    && chmod u+x ${BIN_PATH}phpmd \
     \
     # install PHPcpd globally
     && curl -LsS https://phar.phpunit.de/phpcpd.phar -o ${BIN_PATH}phpcpd \
-    && chmod a+x ${BIN_PATH}phpcpd \
+    && chmod u+x ${BIN_PATH}phpcpd \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpcpd \
     \
     # install PHPcs globally
     && curl -LsS https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar -o ${BIN_PATH}phpcs \
-    && chmod a+x ${BIN_PATH}phpcs \
+    && chmod u+x ${BIN_PATH}phpcs \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpcs \
     \
     # install PHPcbf globally
     && curl -LsS https://squizlabs.github.io/PHP_CodeSniffer/phpcbf.phar -o ${BIN_PATH}phpcbf \
-    && chmod a+x ${BIN_PATH}phpcbf \
+    && chmod u+x ${BIN_PATH}phpcbf \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpcbf \
     \
     # install PHPUnit globally (only works for PHP > 7.3) and make it the default
     && curl -LsS https://phar.phpunit.de/phpunit-9.5.1.phar -o ${BIN_PATH}phpunit9 \
-    && chmod a+x ${BIN_PATH}phpunit9 \
-    && ln -sf /usr/local/bin/phpunit9 /usr/local/bin/phpunit \
+    && chmod u+x ${BIN_PATH}phpunit9 \
+    && ln -sf ${BIN_PATH}phpunit9 /usr/local/bin/phpunit \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpunit9 \
     \
     # install PHPUnit globally (only works for PHP 7.1, PHP 7.2)
     && curl -LsS https://phar.phpunit.de/phpunit-7.5.20.phar -o ${BIN_PATH}phpunit7 \
-    && chmod a+x ${BIN_PATH}phpunit7 \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpunit7 \
+    && chmod u+x ${BIN_PATH}phpunit7 \
     \
     # install PHPUnit globally (only works for PHP 7.0)
     && curl -LsS https://phar.phpunit.de/phpunit-6.5.14.phar -o ${BIN_PATH}phpunit6 \
-    && chmod a+x ${BIN_PATH}phpunit6 \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpunit6 \
+    && chmod u+x ${BIN_PATH}phpunit6 \
     \
     # install PHPUnit globally (works for < PHP 7.0)
     && curl -LsS https://phar.phpunit.de/phpunit-5.7.27.phar -o ${BIN_PATH}phpunit5 \
-    && chmod a+x ${BIN_PATH}phpunit5 \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}phpunit5 \
+    && chmod u+x ${BIN_PATH}phpunit5 \
     \
     # install Golang globally
     && curl -LsS https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz -o /tmp/golang.tgz \
@@ -213,25 +251,37 @@ RUN \
     && mv /tmp/go /usr/local \
     && ln -s /usr/local/go/bin/go ${BIN_PATH}go \
     && ln -s /usr/local/go/bin/gofmt ${BIN_PATH}gofmt \
-    && chmod a+x ${BIN_PATH}go \
-    && chmod a+x ${BIN_PATH}gofmt \
+    && chown ${WORKSPACE_LOCAL_USER}:  ${BIN_PATH}go \
+    && chmod u+x ${BIN_PATH}go \
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}gofmt \
+    && chmod u+x ${BIN_PATH}gofmt \
     \
     # install splitsh-lite
     && curl -LsS https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz -o ${BIN_PATH}splitsh-lite.tgz \
     && tar -zxf ${BIN_PATH}splitsh-lite.tgz -C ${BIN_PATH} \
     && rm ${BIN_PATH}splitsh-lite.tgz \
-    && chown root: ${BIN_PATH}splitsh-lite \
-    && chmod a+x ${BIN_PATH}splitsh-lite
+    && chown ${WORKSPACE_LOCAL_USER}: ${BIN_PATH}splitsh-lite \
+    && chmod u+x ${BIN_PATH}splitsh-lite
 
 # install npm packages, bower, gulp, node-sass (Fast SASS compiler written in C)
-RUN npm install -g \
+# somehow NVM installs using user 'nobody' (id: 1001)
+# during package installation we'll continue down this path
+# source bashrc for NVM (node/npm) to be loaded
+RUN chown -R nobody:nogroup ${NVM_DIR} \
+    && . ~/.bashrc \
+    && npm install -g \
         bower \
         gulp \
         node-sass \
-        webpack
+        webpack \
+        @angular/cli \
+    # chown NVM for the workspace user
+    && chown -R ${WORKSPACE_LOCAL_USER}: ${NVM_DIR}
 
 # allow the local user to execute sudo without requiring a password
-RUN sed -i "s|${WORKSPACE_LOCAL_USER} ALL=(ALL) ALL|${WORKSPACE_LOCAL_USER} ALL=(ALL) NOPASSWD: ALL|" "/etc/sudoers"
+RUN sed -i "s|${WORKSPACE_LOCAL_USER} ALL=(ALL) ALL|${WORKSPACE_LOCAL_USER} ALL=(ALL) NOPASSWD: ALL|" "/etc/sudoers" \
+    # set inet_interfaces to lookback-only
+    && sed -i -e 's|inet_interfaces = all|inet_interfaces = loopback-only|g' /etc/postfix/main.cf
 
 # clean up
 RUN chown -R ${WORKSPACE_LOCAL_USER} /home/${WORKSPACE_LOCAL_USER} \

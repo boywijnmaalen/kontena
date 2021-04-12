@@ -8,11 +8,12 @@ $TTL    604800
 
 
 ; name servers - NS records
-			    IN	    NS	    ns1.dev.local.
-ns1			    IN      A	    172.16.0.4
+@			    IN	    NS	    ns1.dev.local.
+ns1			    IN      A	    127.0.0.1
 
 ; Mail Server MX (Mail Exchanger) record
 dev.local.		IN	    MX	    10	mail.dev.local.
 
 ; A records
+@	            IN	    A	    127.0.0.1
 *	            IN	    A	    127.0.0.1

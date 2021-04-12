@@ -140,3 +140,11 @@ cd /var/www/sites
 if [ -f ~/.bash_custom_aliases ]; then
     source ~/.bash_custom_aliases
 fi
+
+export NVM_DIR="/usr/local/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# it's a bit much to do this every shell start
+# but for now this is still the best way to go about this
+sudo update-ca-certificates > /dev/null 2>&1

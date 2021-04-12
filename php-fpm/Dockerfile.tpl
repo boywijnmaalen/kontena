@@ -6,19 +6,22 @@ ARG PHP_FPM_VERSION=$MAJOR_VERSION$MINOR_VERSION
 ARG PHP_FPM_INSTALL_PDO_SQLSRV=false
 ARG PHP_FPM_INSTALL_XDEBUG=false
 ARG PHP_FPM_INSTALL_MEMCACHED=false
+ARG PHP_FPM_INSTALL_REDIS=false
 ARG PHP_FPM_LOG=/var/log/php-fpm.log
 ARG PHP_XDEBUG_LOG=/var/log/php-xdebug.log
 ARG PHP_OPCACHE_LOG=/var/log/php-opcache.log
-ARG PHP72_MCRYPT_VERSION=1.0.2
-ARG PHP73_MCRYPT_VERSION=1.0.3
-ARG PHP74_MCRYPT_VERSION=1.0.4
-ARG PHP_LATEST_MCRYPT_VERSION=1.0.4
+
+# https://pecl.php.net/package/mcrypt
+ARG PHP_MCRYPT_VERSION=1.0.4
+
 # https://pecl.php.net/package/pdo_sqlsrv
 ARG PHP_PDO_SQL_VERSION=5.9.0
 # https://pecl.php.net/package/xdebug
 ARG PHP_XDEBUG_VERSION=3.0.2
 # https://pecl.php.net/package/memcached
 ARG PHP_MEMCACHED_VERSION=3.1.5
+# https://pecl.php.net/package/redis
+ARG PHP_REDIS_VERSION=5.3.3
 
 # prevent error like 'debconf: unable to initialize frontend: Dialog' because not all packages support 'interactive' mode
 # change the way debconf (Debian Package Configuration System) configures packages
@@ -49,6 +52,7 @@ RUN apt-get update \
 RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
     \
     apt-get install -y --no-install-recommends \
+        apt-utils \
         bash \
         mlocate \
         net-tools \
@@ -58,6 +62,8 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         wget \
         tcpdump \
         telnet \
+        traceroute \
+        dnsutils \
         procps \
         inetutils-ping \
     && update-alternatives --set editor /usr/bin/vim.basic \
@@ -72,7 +78,7 @@ RUN if [ ${PHP_FPM_VERSION} -ge 73 ]; then \
 
 # possible values for ext-name:
 # bcmath bz2 calendar ctype curl dba dom enchant exif fileinfo filter ftp gd gettext gmp hash iconv imap interbase intl json ldap mbstring mcrypt mysqli oci8 odbc opcache pcntl pdo pdo_dblib pdo_firebird pdo_mysql pdo_oci pdo_odbc pdo_pgsql pdo_sqlite pgsql phar posix pspell readline recode reflection session shmop simplexml snmp soap sockets spl standard sysvmsg sysvsem sysvshm tidy tokenizer wddx xml xmlreader xmlrpc xmlwriter xsl zip
-RUN docker-php-ext-install -j$(nproc) bcmath curl iconv intl mysqli opcache pdo pdo_mysql simplexml xml zip \
+RUN docker-php-ext-install -j$(nproc) bcmath curl iconv intl mysqli opcache pdo pdo_mysql simplexml soap xml zip \
     # per PHP 7.4 the GD library configure options have changed slightly
     && if [ ${PHP_FPM_VERSION} -ge 74 ]; then \
         docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
@@ -90,14 +96,14 @@ RUN docker-php-ext-install -j$(nproc) bcmath curl iconv intl mysqli opcache pdo 
     ; else \
         pecl channel-update pecl.php.net \
         && if [ ${PHP_FPM_VERSION} -eq 72 ]; then \
-            echo "autodetect" | pecl install --nodeps mcrypt-${PHP72_MCRYPT_VERSION} \
+            echo "autodetect" | pecl install --nodeps mcrypt-1.0.2 \
         ;elif [ ${PHP_FPM_VERSION} -eq 73 ]; then \
-            echo "autodetect" | pecl install --nodeps mcrypt-${PHP73_MCRYPT_VERSION} \
+            echo "autodetect" | pecl install --nodeps mcrypt-1.0.3 \
         ;elif [ ${PHP_FPM_VERSION} -eq 74 ]; then \
-            echo "autodetect" | pecl install --nodeps mcrypt-${PHP74_MCRYPT_VERSION} \
+            echo "autodetect" | pecl install --nodeps mcrypt-1.0.4 \
         # only PHP 8.0 remains
         ;else \
-            echo "autodetect" | pecl install --nodeps mcrypt-${PHP_LATEST_MCRYPT_VERSION} \
+            echo "autodetect" | pecl install --nodeps mcrypt-${PHP_MCRYPT_VERSION} \
         ;fi \
         && docker-php-ext-enable mcrypt \
     ;fi
@@ -162,41 +168,46 @@ RUN if [ ${PHP_FPM_INSTALL_PDO_SQLSRV} = true ]; then \
 
 # xDebug:
 # https://xdebug.org/docs/compat
-RUN if [ ${PHP_FPM_INSTALL_XDEBUG} = true ]; then \
-    \
+RUN pecl channel-update pecl.php.net \
+    && if [ ${PHP_FPM_INSTALL_XDEBUG} = true ]; then \
     # < PHP 7.0
     # XDebug 2.6.0 and up no longer support PHP5
     if [ ${PHP_FPM_VERSION} -lt 70 ]; then \
-    \
         pecl install xdebug-2.5.5 \
     ;elif [ ${PHP_FPM_VERSION} -eq 70 ]; then \
-        \
         pecl install xdebug-2.7.2 \
     ;elif [ ${PHP_FPM_VERSION} -eq 71 ]; then \
-        \
         pecl install xdebug-2.9.8 \
     ;else \
-        \
         pecl install xdebug-${PHP_XDEBUG_VERSION} \
     ;fi \
-    \
     && docker-php-ext-enable xdebug \
 ;fi
 
 # Memcached:
-RUN if [ ${PHP_FPM_INSTALL_MEMCACHED} = true ]; then \
-    \
+RUN pecl channel-update pecl.php.net \
+    && if [ ${PHP_FPM_INSTALL_MEMCACHED} = true ]; then \
     # < PHP 7.0
     # Memcached 3.0 and up no longer support PHP5
     if [ ${PHP_FPM_VERSION} -lt 70 ]; then \
-        \
         pecl install memcached-2.2.0 \
     ;else \
-        \
         pecl install memcached-${PHP_MEMCACHED_VERSION} \
     ;fi \
-    \
     && docker-php-ext-enable memcached \
+;fi
+
+# Redis:
+RUN pecl channel-update pecl.php.net \
+    && if [ ${PHP_FPM_INSTALL_REDIS} = true ]; then \
+    # < PHP 7.0
+    # Redis 4.3.0 is the latest version supporting PHP5
+    if [ ${PHP_FPM_VERSION} -lt 70 ]; then \
+        pecl install redis-4.3.0 \
+    ;else \
+        pecl install redis-${PHP_REDIS_VERSION} \
+    ;fi \
+    && docker-php-ext-enable redis \
 ;fi
 
 # create and set permissions for log files

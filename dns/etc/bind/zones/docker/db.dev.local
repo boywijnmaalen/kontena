@@ -1,0 +1,4 @@
+$include "/etc/bind/zones/db.dev.local"
+
+@	            IN	    A	    172.16.0.5
+*	            IN	    A	    172.16.0.5

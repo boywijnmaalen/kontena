@@ -14,12 +14,13 @@ Thumbs.db
 .env
 _data/*
 _logs/*
+_certs/*
 docs/
 
 cockroachdb/entrypoint.sh
 
 dns/entrypoint.sh
-dns/etc/bind/named.conf.custom.local
+dns/etc/bind/named.custom.conf
 
 gitlab/entrypoint.sh
 gitlab/home/local_user/.ssh/authorized_keys

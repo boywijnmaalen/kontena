@@ -25,6 +25,8 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         wget \
         tcpdump \
         telnet \
+        traceroute \
+        dnsutils \
         procps \
         inetutils-ping \
     && update-alternatives --set editor /usr/bin/vim.basic \

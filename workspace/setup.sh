@@ -84,14 +84,21 @@ for php_version in ${PHP_VERSIONS[*]}; do \\
         touch \"\${php_opcache_log_file}\" \\
     ;fi
 
+    # check if php ${php_version} xdebug log exists
+    php_xdebug_log_file=/var/log/php\${exploded_php_version[0]}\${exploded_php_version[1]}-xdebug.log
+    if [ ! -e \"\${php_xdebug_log_file}\" ]; then \\
+
+        touch \"\${php_xdebug_log_file}\" \\
+    ;fi
+
     # set log file permission áfter the mount-binding was done
-    chown ${WORKSPACE_LOCAL_USER}: \"\${php_fpm_log_file}\" \"\${php_opcache_log_file}\"
-    chmod 644 \"\${php_fpm_log_file}\" \"\${php_opcache_log_file}\"
+    chown ${WORKSPACE_LOCAL_USER}: \"\${php_fpm_log_file}\" \"\${php_opcache_log_file}\" \"\${php_xdebug_log_file}\"
+    chmod 644 \"\${php_fpm_log_file}\" \"\${php_opcache_log_file}\" \"\${php_xdebug_log_file}\"
 
 done
 
 # add gitlab.dev.local to /etc/hosts, 172.16.0.8 is gitlab
-# added for command for command \'git clone git@gitlab.dev.local:namspace/project.git\'
+# added for command for command \'git clone git@gitlab.dev.local:namespace/project.git\'
 if ! grep -q \"172.16.0.8\" \"/etc/hosts\"; then
   echo \"\" >> /etc/hosts
   echo \"172.16.0.8	gitlab.dev.local\" >> /etc/hosts

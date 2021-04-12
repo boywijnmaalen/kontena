@@ -11,5 +11,5 @@ directories=(
 files=(
     ${log_dir}/mysql/mariadb-slow.log
     ${log_dir}/mysql.log
-    ${log_dir}/mysql.err
+    ${log_dir}/error.log
 );

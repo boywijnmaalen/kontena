@@ -51,7 +51,7 @@ options {
     };
 
     listen-on-v6 {
-        ::1;
+        any;
     };
 
     allow-recursion {
@@ -74,6 +74,10 @@ options {
 
     recursion yes;
 
-    dnssec-enable yes;
-    dnssec-validation yes;
+    //========================================================================
+    // If BIND logs error messages about the root key being expired,
+    // you will need to update your keys.  See https://www.isc.org/bind-keys
+    //========================================================================
+
+    dnssec-validation no;
 };

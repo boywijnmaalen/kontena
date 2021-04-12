@@ -1,0 +1,3 @@
+$include "/etc/bind/zones/db.reverse.dev.local"
+
+0.16.172.in-addr.arpa.  IN     NS       ns1.dev.local.

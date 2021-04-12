@@ -10,7 +10,6 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         apt-utils \
-        dnsutils \
         bash \
         mlocate \
         net-tools \
@@ -20,6 +19,8 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         wget \
         tcpdump \
         telnet \
+        traceroute \
+        dnsutils \
         procps \
         inetutils-ping \
     && update-alternatives --set editor /usr/bin/vim.basic \
@@ -33,4 +34,3 @@ RUN apt-get clean \
     && rm /etc/bind/named.conf.options \
     && rm /etc/bind/named.conf.local \
     && rm /etc/bind/named.conf
-

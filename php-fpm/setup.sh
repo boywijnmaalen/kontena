@@ -15,9 +15,15 @@ for php_version in ${PHP_VERSIONS[*]}; do
     # generate PHP-FPM Dockerfiles from a template
     exp=(${php_version//./ });
 
-    # copy workspace php.ini to php-cli.ini
-    cp "${WORKSPACE_DIR}/php/php${exp[0]}${exp[1]}-cli.ini" "${PHP_DIR}/${php_version}/php-cli.ini"
+    php_cli_file="${PHP_DIR}/${php_version}/php-cli.ini"
 
+    # copy workspace php.ini to php-cli.ini
+    cp "${WORKSPACE_DIR}/php/php${exp[0]}${exp[1]}-cli.ini" "${php_cli_file}"
+
+    # remove the php version number from the FPM CLI version of the xdebug lof file definition
+    sed -i '' -e "s|\/var\/log\/php${exp[0]}${exp[1]}-xdebug.log|\/var\/log\/php-xdebug.log|g" "${php_cli_file}"
+
+    # start building PHP-FPM Dockerfile
     os_release=buster
     microsoft_debian_release=10
     if [ ${exp[0]}${exp[1]} -lt 71 ]; then \
@@ -74,6 +80,9 @@ if [ ! -e \"${php_opcache_log_file}\" ]; then \\
 # set log file permission áfter the mount-binding is done
 chown www-data: \"${php_fpm_log_file}\" \"${php_opcache_log_file}\" \"${php_xdebug_log_file}\"
 chmod 644 \"${php_fpm_log_file}\" \"${php_opcache_log_file}\" \"${php_xdebug_log_file}\"
+
+# check for new ca certificates
+update-ca-certificates > /dev/null 2>&1
 
 # start php-fpm via the main entrypoint file
 php-fpm"

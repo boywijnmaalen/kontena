@@ -1,6 +1,6 @@
 # https://hub.docker.com/r/phusion/baseimage/tags?name=bionic&page=1&ordering=last_updated
 # 18.04 = bionic beaver
-# 20.04 = focal fossa (not yet released by phusion
+# 20.04 = focal fossa (not yet released by phusion)
 FROM phusion/baseimage:bionic-1.0.0
 
 ARG BIN_PATH=/usr/local/bin/
@@ -41,6 +41,8 @@ RUN if [ ${DEV_ENVIRONMENT} = true ]; then \
         wget \
         tcpdump \
         telnet \
+        traceroute \
+        dnsutils \
         procps \
         inetutils-ping \
     && update-alternatives --set editor /usr/bin/vim.basic \

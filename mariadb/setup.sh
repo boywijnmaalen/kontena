@@ -18,8 +18,8 @@ entrypoint_filename=${MARIADB_DIR}/entrypoint.sh
 log_path="/var/log/"
 mysql_data_path="/var/lib/mysql/"
 mysql_log_path="/var/log/mysql/"
-mysql_error_log_file="${log_path}mysql.err"
-mysql_log_file="${log_path}mysql.log"
+mysql_error_log_file="${mysql_log_path}error.log"
+mysql_log_file="${mysql_log_path}mysql.log"
 
 entrypoint="#!/usr/bin/env bash
 
@@ -44,9 +44,6 @@ if [ ! -e \"${mysql_log_file}\" ]; then \
 # set log file permission áfter the mount-binding was done
 chown -R mysql:adm \"${mysql_log_path}\"
 chmod 740 \"${mysql_log_path}\"
-
-chown mysql:adm \"${mysql_error_log_file}\" \"${mysql_log_file}\"
-chmod 640 \"${mysql_error_log_file}\" \"${mysql_log_file}\"
 
 # set database directory/file permissions
 # check if mysql directory exists

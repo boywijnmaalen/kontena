@@ -4,9 +4,18 @@ Kontena:
     A Docker PHP development environment
 
 **Kontena** (`Swahili <https://en.wikipedia.org/wiki/Swahili_language>`_ for '*container*', pronounced: *Kon-tee-naa*) is a containerized PHP development environment.
-Its goal is to create a platform independent environment.
-It provides multiple `PHP-FPM (FastCGI Process Manager) <https://php-fpm.org/>`_ versions (`5.6 <https://github.com/php/php-src/tree/PHP-5.6>`_, `7.0 <https://github.com/php/php-src/tree/PHP-7.0>`_ & `7.1 <https://github.com/php/php-src/tree/PHP-7.1>`_),
-is based on a `NGINX Web server <https://www.nginx.com/resources/wiki/>`_ and is accompanied by a `MariaDB (RDBMS) <https://mariadb.org/>`_ - a Relational Database Management System.
+Its goal is to create an independent software development platform in the context of PHP and other Open-Source technologies.
+
+It provides;
+
+- Multiple `PHP-FPM (FastCGI Process Manager) <https://php-fpm.org/>`_ versions (`5.6 <https://github.com/php/php-src/tree/PHP-5.6>`_, `7.0 <https://github.com/php/php-src/tree/PHP-7.0>`_, `7.1 <https://github.com/php/php-src/tree/PHP-7.1>`_, `7.2 <https://github.com/php/php-src/tree/PHP-7.2>`_, `7.3 <https://github.com/php/php-src/tree/PHP-7.3>`_, `7.4 <https://github.com/php/php-src/tree/PHP-7.4>`_ & `8.0 <https://github.com/php/php-src/tree/PHP-8.0>`_).
+- `CockroachDB <https://www.cockroachlabs.com/>`_ - Distributed SQL database management system
+- `Bind9 <https://www.isc.org/bind/>`_ - DNS for the dev.local domain (forwarder for all other queries)
+- `MariaDB (RDBMS) <https://mariadb.org/>`_ - Relational Database Management System
+- `NGINX Web server <https://www.nginx.com/resources/wiki/>`_ - Web Server
+- `Redis <https://redis.io/>`_ - In-memory key-value database
+-  Workspace container - Development server
+
 
 Check out the `Github.io/kontena <https://boywijnmaalen.github.io/kontena/>`_ and follow me on `Twitter <https://twitter.com/boywijnmaalen/>`_.
 
@@ -34,38 +43,41 @@ Docker
 Project
 -------
 
-* Run ``$ git clone git@github.com:boywijnmaalen/kontena.git`` or download the latest `here <https://github.com/boywijnmaalen/kontena/archive/master.zip>`_.
+**Installation**
 
-* Run ``$ cd kontena``
-* Run ``$ cp .env.example .env``
-* Update the config options in ``.env`` with your own values
+.. code-block:: bash
 
-**If you want to run a first time installation;**
+  $ git clone git@github.com:boywijnmaalen/kontena.git
+  $ cd kontena
+  $ cp .env.example .env
 
-Obviously you can run your containers via Docker for Mac's (D4M) default implementation of osxfs. Performance however can be abismal.
-You can do so by running;
+  # Configure options in .env
+  # Set the DNS server of the current network interface to 127.0.0.1
+  # Add any self-signed certificates to the `_certs` directory (optional)
 
-* Run ``$ ./_bin/setup.sh && ./_bin/start.sh``
-
-But you can also make use of `d4m-nfs's <https://github.com/IFSight/d4m-nfs>`_ NFS mounts! (rather than the default osxfs implementation)
-Read all about it in ``./readme-d4m-performance-improvement``.
-
-Once it is installed you can start using it by running;
-
-* Run ``$ ./_bin/setup.sh && ./_bin/start.sh nfs`` (mind the '**nfs**' parameter)
-
-**If you want to do a re-installation from scratch;**
-
-* Run ``$ docker-compose down --remove-orphans && ./_bin/reset.sh && ./_bin/start.sh``
-
-  (you can optionally supply the '**nfs**' parameter here as well)
+  $ ./_bin/setup.sh && docker-compose up -d --build
 
 **Now go grab a coffee and be patient :)**
 
 Notes:
- - *The script ./_bin/start.sh will start the Docker application in the event it wasn't running already*
- - *You can run ./_bin/setup.sh as often as you like*
- - *using the 'nfs' parameter requires the use of some sudo commands, your password therefor is required*
+  - Running ``./_bin/setup.sh`` is non-destructive and can be run as many times as is required
+
+Hostnames
+---------
+
+- workspace.dev.local (``172.16.0.3``)
+- dns.dev.local (``172.16.0.4``)
+- nginx.dev.local (``172.16.0.5``)
+- mariadb.dev.local (``172.16.0.6``)
+- cockroachdb.dev.local (``172.16.0.7``)
+- redis.dev.local (``172.16.0.8``)
+- php56-fpm.dev.local (``172.16.0.20``)
+- php70-fpm.dev.local (``172.16.0.21``)
+- php71-fpm.dev.local (``172.16.0.22``)
+- php72-fpm.dev.local (``172.16.0.23``)
+- php73-fpm.dev.local (``172.16.0.24``)
+- php74-fpm.dev.local (``172.16.0.25``)
+- php80-fpm.dev.local (``172.16.0.26``)
 
 Optional
 --------
@@ -80,7 +92,6 @@ Components
 * `Nginx`_
 * `PHP-FPM`_
 * `MariaDB`_
-* `Gitlab CE`_
 
 Workspace
 ---------
@@ -94,7 +105,7 @@ Features
 
 * A fully customizable home directory (without rebuilding the container)
 * Pre-defined scripts at your disposal (e.g. clean your directories of Mac files, etc)
-* Pre-defined aliasses at your disposal (e.g. easy switching between PHP 5.6, 7.0 or 7.1, etc)
+* Pre-defined aliasses at your disposal (e.g. easy switching between all available PHP versions including phpize, php-config & phar)
 * A ``~/.bashrc`` that is filled with;
 
   * all kinds of additions (e.g. colored bash, custom aliases, etc)
@@ -102,12 +113,10 @@ Features
 
 * Comes installed with;
 
-  * `PHP 5.6 <https://github.com/php/php-src/tree/PHP-5.6/>`_
-  * `PHP 7.0 <https://github.com/php/php-src/tree/PHP-7.0/>`_
-  * `PHP 7.1 <https://github.com/php/php-src/tree/PHP-7.1/>`_
+  * PHP `5.6 <https://github.com/php/php-src/tree/PHP-5.6/>`_, `7.0 <https://github.com/php/php-src/tree/PHP-7.0/>`_, `7.1 <https://github.com/php/php-src/tree/PHP-7.1/>`_, `7.2 <https://github.com/php/php-src/tree/PHP-7.2/>`_, `7.3 <https://github.com/php/php-src/tree/PHP-7.3/>`_, `7.4 <https://github.com/php/php-src/tree/PHP-7.4/>`_ & `8.0 <https://github.com/php/php-src/tree/PHP-8.0/>`_
   * `Git <https://git-scm.com//>`_
-  * `Composer <https://getcomposer.org//>`_
-  * `NodeJS <https://nodejs.org/>`_
+  * `Composer <https://getcomposer.org//>`_ (V1 & V2)
+  * `NodeJS <https://nodejs.org/>`_ (using NVM - versions 14.15.5 & 15.8.0)
   * `Yarn <https://yarnpkg.com/>`_
   * `Codeception <http://codeception.com//>`_
   * `Deployer <https://deployer.org//>`_
@@ -119,6 +128,7 @@ Features
   * `Bower <https://bower.io//>`_
   * `Gulp <http://gulpjs.com//>`_
   * `Node-sass <https://github.com/sass/node-sass/>`_
+  * `GO <https://golang.org/>`_ (1.15.8)
 
 
 Switch between PHP version
@@ -149,31 +159,10 @@ Features
 ~~~~~~~~
 
 * All config (located in ``nginx/``) is editable without rebuilding the container
-* A 100% valid SSL certificate (not self-signed!) which is valid for the `https://*.dev.local` domain.
-* A vhost template (``nginx/vhost.conf``) for quick creation of new vhost configurations
+* A 100% valid SSL certificate (once imported on host machine) which is valid for the `*.dev.local` domain
+* All vhost configuration are located in ``nginx/sites-available/``
+* A vhost template can be found in ``nginx/vhost.conf``
 
-Vhosts
-~~~~~~
-
-When starting a new development project you're probably going to need a new vhost.
-
-
-Let's go with the following example;
-
-    You want to create a new website located at https://dashboard.dev.local.
-    All the project files will live in directory ``_src/sites/dashboard/``
-    (The included SSL Certificate is valid for \*.dev.local domains, hence the example).
-
-* First create the new web root directory ``_src/sites/dashboard`` by running: ``$ mkdir _src/sites/dashboard``
-* Create a new vhost configuration file by copying the vhost template to the correct directory by running: ``$ cp nginx/vhost.conf nginx/sites-available/dashboard.conf``
-* Update the '*root*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new web root path '``_src/sites/dashboard``'
-* Update the '*server_name*' directive in the new ``nginx/sites-available/dashboard.conf`` vhost configuration file with the new hostname '``dashboard.dev.local``' (no 'http' or https' required here)
-* Optionally update any of the other directives if you want to.
-
-The new vhost is now ready for use! But for now, your host machine is not aware of the new hostname so we'll need to add it to its hosts file;
-
-* If you are on Mac/Linux, add '``127.0.0.1	dashboard.dev.local``' to file ``/etc/hosts``, if you are on Windows add it to file ``c:\System32\drivers\etc\hosts``
-* The last thing we need to do is tell Nginx there is a new vhost configuration. Nginx only gathers vhost information upon startup. The easiest way to do that is to restart the Nginx container by running ``docker-compose restart nginx``.
 
 PHP-FPM
 -------
@@ -200,12 +189,7 @@ Features
 Connect to MariaDB
 ~~~~~~~~~~~~~~~~~~
 
-Connect to Mariadb by using IP ``172.16.0.7``
-
-Gitlab CE
----------
-
-`GitLab <https://about.gitlab.com>`_ is a web-based Git repository manager with wiki and issue tracking features, using an open source license.
+Connect to Mariadb by using IP ``172.16.0.6`` or ``mariadb.dev.local``
 
 
 Docker
@@ -228,7 +212,7 @@ Commands
 License
 =======
 
-??
+TBD
 
 Authors
 =======
