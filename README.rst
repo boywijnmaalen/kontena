@@ -134,7 +134,7 @@ Features
 Switch between PHP version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run ``$ switchphp 5.6`` in order to switch to PHP version 5.6 (possible values; ``5.6``, ``7.0`` or ``7.1``)
+Run ``$ switchphp 5.6`` in order to switch to PHP version 5.6 (possible values; ``5.6``, ``7.0``, ``7.1``, ``7.2``, ``7.3``, ``7.4``, ``8.0``)
 
 SSH Keys
 ~~~~~~~~
